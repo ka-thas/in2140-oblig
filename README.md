@@ -27,3 +27,12 @@ Delete a directory
 Find Inode by Name
 Load File System
 Shut Down File System
+
+---
+
+struct inode\* load_inodes();
+The function reads the master file table file and creates an inode in memory for each
+corresponding entry in the file. The function puts pointers between the inodes correctly.
+The master file table file on disk remains unchanged.
+If the loading operation succeeds, the inode returned by this function should always be
+the root directory, meaning that its name field should point to the string “/”.
