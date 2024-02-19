@@ -30,6 +30,8 @@ Shut Down File System
 
 ---
 
+push-test
+
 struct inode\* load_inodes();
 The function reads the master file table file and creates an inode in memory for each
 corresponding entry in the file. The function puts pointers between the inodes correctly.
