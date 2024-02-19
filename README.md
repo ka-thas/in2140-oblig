@@ -1,4 +1,4 @@
-## IN2140 oblig
+# IN2140 oblig
 
 Team: Christian, Iver, Ka
 
@@ -9,23 +9,40 @@ This is the only mandatory assignment for the spring '24 semester. A bunch of se
 It may be appropriate to implement the functions in this order:
 
 1. Functions required for loading:
-   – load_inodes
-   – find_inode_by_name
+
+    – load_inodes
+
+    – find_inode_by_name
+
 2. Functions required to create files and directories and update the master file
    table and the block allocation table.
-   – create_dir – create_file – fs_shutdown
+
+    – create_dir
+
+    – create_file
+
+    – fs_shutdown
+
 3. Functions required to delete files and directories:
-   – delete_file
-   – delete_dir
+
+    – delete_file
+
+    – delete_dir
 
 ## Implementation
 
 Create file
+
 Create Directory
+
 Delete a file
+
 Delete a directory
+
 Find Inode by Name
+
 Load File System
+
 Shut Down File System
 
 ---
