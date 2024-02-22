@@ -31,19 +31,19 @@ It may be appropriate to implement the functions in this order:
 
 ## Implementation
 
-Create file
+[ ] Create file
 
-Create Directory
+[ ] Create Directory
 
-Delete a file
+[ ] Delete a file
 
-Delete a directory
+[ ] Delete a directory
 
-Find Inode by Name
+[ ] Find Inode by Name
 
-Load File System
+[ ] Load File System
 
-Shut Down File System
+[ ] Shut Down File System
 
 ---
 
