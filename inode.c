@@ -84,6 +84,11 @@ int delete_dir(struct inode *parent, struct inode *node)
     return 0;
 }
 
+/* Read the file master_file_table and create an inode in memory
+ * for every inode that is stored in the file. Set the pointers
+ * between inodes correctly.
+ * The file master_file_table remains unchanged.
+ */
 struct inode *load_inodes(char *master_file_table)
 {
     /* TODO */
