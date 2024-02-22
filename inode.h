@@ -15,16 +15,16 @@
  */
 struct inode
 {
-	int            id;
-	char*          name;
-	char           is_directory;
+	int id;
+	char *name;
+	char is_directory;
 
-	int            num_children;
-	struct inode** children;
+	int num_children;
+	struct inode **children;
 
-	int            filesize;
-    int            num_blocks;
-    size_t*        blocks;
+	int filesize;
+	int num_blocks;
+	size_t *blocks;
 };
 
 /* Create a file below the inode parent. Parent must
@@ -34,20 +34,20 @@ struct inode
  * disk to store all of these bytes.
  * Returns a pointer to file's inodes.
  */
-struct inode* create_file( struct inode* parent, char* name, int size_in_bytes );
+struct inode *create_file(struct inode *parent, char *name, int size_in_bytes);
 
 /* Create a directory below the inode parent. Parent must
  * be a directory.
  * Returns a pointer to file's inodes.
  */
-struct inode* create_dir( struct inode* parent, char* name );
+struct inode *create_dir(struct inode *parent, char *name);
 
 /* Check all the inodes that are directly referenced by
  * the node parent. If one of them has the name "name",
  * its inode pointer is returned.
  * parent must be directory.
  */
-struct inode* find_inode_by_name( struct inode* parent, char* name );
+struct inode *find_inode_by_name(struct inode *parent, char *name);
 
 /* Delete the file given by its inode, if it is an inode
  * directly referenced by parent.
@@ -55,27 +55,27 @@ struct inode* find_inode_by_name( struct inode* parent, char* name );
  * referenced by this file. This removes those blocks from
  * simulate disk.
  */
-int delete_file( struct inode* parent, struct inode* node );
+int delete_file(struct inode *parent, struct inode *node);
 
 /* Delete the directory given by its inode, if it is an inode
  * directly referenced by parent.
  * The function fails if the node is still referencing other
  * inodes.
  */
-int delete_dir( struct inode* parent, struct inode* node );
+int delete_dir(struct inode *parent, struct inode *node);
 
 /* Write the given inode root and all inodes referenced by it
  * to the file called superblock, following the oblig instructions.
  * No inodes are changed.
  */
-void save_inodes( char* master_file_table, struct inode* root );
+void save_inodes(char *master_file_table, struct inode *root);
 
 /* Read the file master_file_table and create an inode in memory
  * for every inode that is stored in the file. Set the pointers
  * between inodes correctly.
  * The file master_file_table remains unchanged.
  */
-struct inode* load_inodes( char* master_file_table );
+struct inode *load_inodes(char *master_file_table);
 
 /* This function is handed out.
  *
@@ -90,14 +90,13 @@ struct inode* load_inodes( char* master_file_table );
  * This function can be used to end a program after
  * save_inodes and helps you to avoid valgrind errors.
  */
-void fs_shutdown( struct inode* node );
+void fs_shutdown(struct inode *node);
 
 /* This function is handed out.
  *
  * It prints the node that is receives as a parameter,
  * and recurivesly all inodes that are stored below it.
  */
-void debug_fs( struct inode* node );
+void debug_fs(struct inode *node);
 
 #endif
-

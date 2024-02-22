@@ -21,10 +21,10 @@ static int num_inode_ids = 0;
  * it.
  * Do not change.
  */
-static int blocks_needed( int bytes )
+static int blocks_needed(int bytes)
 {
     int blocks = bytes / BLOCKSIZE;
-    if( bytes % BLOCKSIZE != 0 )
+    if (bytes % BLOCKSIZE != 0)
         blocks += 1;
     return blocks;
 }
@@ -35,64 +35,122 @@ static int blocks_needed( int bytes )
  * Make sure to update num_inode_ids when you have loaded a simulated disk.
  * Do not change.
  */
-static int next_inode_id( )
+static int next_inode_id()
 {
     int retval = num_inode_ids;
     num_inode_ids += 1;
     return retval;
 }
 
-struct inode* create_file( struct inode* parent, char* name, int size_in_bytes )
+struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 {
-    /* to be implemented */
+    /* TODO */
     return NULL;
 }
 
-struct inode* create_dir( struct inode* parent, char* name )
+struct inode *create_dir(struct inode *parent, char *name)
 {
-    /* to be implemented */
+    /* TODO */
     return NULL;
 }
 
-struct inode* find_inode_by_name( struct inode* parent, char* name )
+struct inode *find_inode_by_name(struct inode *parent, char *name)
 {
-    /* to be implemented */
+    /* TODO */
     return NULL;
 }
 
-static int verified_delete_in_parent( struct inode* parent, struct inode* node )
+static int verified_delete_in_parent(struct inode *parent, struct inode *node)
 {
-    /* to be implemented */
+    /* TODO */
     return 0;
 }
 
-int is_node_in_parent( struct inode* parent, struct inode* node )
+int is_node_in_parent(struct inode *parent, struct inode *node)
 {
-    /* to be implemented */
+    /* TODO */
     return 0;
 }
 
-int delete_file( struct inode* parent, struct inode* node )
+int delete_file(struct inode *parent, struct inode *node)
 {
-    /* to be implemented */
+    /* TODO */
     return 0;
 }
 
-int delete_dir( struct inode* parent, struct inode* node )
+int delete_dir(struct inode *parent, struct inode *node)
 {
-    /* to be implemented */
+    /* TODO */
     return 0;
 }
 
-void save_inodes( char* master_file_table, struct inode* root )
+struct inode *load_inodes(char *master_file_table)
 {
-    /* to be implemented */
-}
-
-struct inode* load_inodes( char* master_file_table )
-{
-    /* to be implemented */
+    /* TODO */
     return NULL;
+}
+
+/* The function save_inode is a recursive functions that is
+ * called by save_inodes to store a single inode on disk,
+ * and call itself recursively for every child if the node
+ * itself is a directory.
+ */
+static void save_inode(FILE *file, struct inode *node)
+{
+    if (!node)
+        return;
+
+    int len = strlen(node->name) + 1;
+
+    fwrite(&node->id, 1, sizeof(int), file);
+    fwrite(&len, 1, sizeof(int), file);
+    fwrite(node->name, 1, len, file);
+    fwrite(&node->is_directory, 1, sizeof(char), file);
+    if (node->is_directory)
+    {
+        fwrite(&node->num_children, 1, sizeof(int), file);
+        for (int i = 0; i < node->num_children; i++)
+        {
+            struct inode *child = node->children[i];
+            size_t id = child->id;
+            fwrite(&id, 1, sizeof(size_t), file);
+        }
+
+        for (int i = 0; i < node->num_children; i++)
+        {
+            struct inode *child = node->children[i];
+            save_inode(file, child);
+        }
+    }
+    else
+    {
+        fwrite(&node->filesize, 1, sizeof(int), file);
+        fwrite(&node->num_blocks, 1, sizeof(int), file);
+        for (int i = 0; i < node->num_blocks; i++)
+        {
+            fwrite(&node->blocks[i], 1, sizeof(size_t), file);
+        }
+    }
+}
+
+void save_inodes(char *master_file_table, struct inode *root)
+{
+    if (root == NULL)
+    {
+        fprintf(stderr, "root inode is NULL\n");
+        return;
+    }
+
+    FILE *file = fopen(master_file_table, "w");
+    if (!file)
+    {
+        fprintf(stderr, "Failed to open file %s\n", master_file_table);
+        return;
+    }
+
+    save_inode(file, root);
+
+    fclose(file);
 }
 
 /* This static variable is used to change the indentation while debug_fs
@@ -102,27 +160,28 @@ static int indent = 0;
 
 /* Do not change.
  */
-void debug_fs( struct inode* node )
+void debug_fs(struct inode *node)
 {
-    if( node == NULL ) return;
-    for( int i=0; i<indent; i++ )
+    if (node == NULL)
+        return;
+    for (int i = 0; i < indent; i++)
         printf("  ");
 
-    if( node->is_directory )
+    if (node->is_directory)
     {
-        printf("%s (id %d)\n", node->name, node->id );
+        printf("%s (id %d)\n", node->name, node->id);
         indent++;
-        for( int i=0; i<node->num_children; i++ )
+        for (int i = 0; i < node->num_children; i++)
         {
-            struct inode* child = (struct inode*)node->children[i];
-            debug_fs( child );
+            struct inode *child = (struct inode *)node->children[i];
+            debug_fs(child);
         }
         indent--;
     }
     else
     {
-        printf("%s (id %d size %db blocks ", node->name, node->id, node->filesize );
-        for( int i=0; i<node->num_blocks; i++ )
+        printf("%s (id %d size %db blocks ", node->name, node->id, node->filesize);
+        for (int i = 0; i < node->num_blocks; i++)
         {
             printf("%d ", (int)node->blocks[i]);
         }
@@ -132,21 +191,24 @@ void debug_fs( struct inode* node )
 
 /* Do not change.
  */
-void fs_shutdown( struct inode* inode )
+void fs_shutdown(struct inode *inode)
 {
-    if( !inode ) return;
+    if (!inode)
+        return;
 
-    if( inode->is_directory )
+    if (inode->is_directory)
     {
-        for( int i=0; i<inode->num_children; i++ )
+        for (int i = 0; i < inode->num_children; i++)
         {
-            fs_shutdown( inode->children[i] );
+            fs_shutdown(inode->children[i]);
         }
     }
 
-    if( inode->name )     free( inode->name );
-    if( inode->children ) free( inode->children );
-    if( inode->blocks )   free( inode->blocks );
-    free( inode );
+    if (inode->name)
+        free(inode->name);
+    if (inode->children)
+        free(inode->children);
+    if (inode->blocks)
+        free(inode->blocks);
+    free(inode);
 }
-
