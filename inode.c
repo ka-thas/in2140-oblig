@@ -44,19 +44,61 @@ static int next_inode_id()
 
 struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 {
-    /* TODO */
+    /* TODO Christian */
     return NULL;
 }
 
 struct inode *create_dir(struct inode *parent, char *name)
 {
-    /* TODO */
+    /* TODO Ka */
+
     return NULL;
 }
 
+/* Check all the inodes that are directly referenced by
+ * the node parent. If one of them has the name "name",
+ * its inode pointer is returned.
+ * parent must be directory.
+ */
 struct inode *find_inode_by_name(struct inode *parent, char *name)
 {
-    /* TODO */ 
+
+    /* Ka - ikke testet
+    gå gjennom hvert barn og sjekk navnet deres
+    returner peker til barn-inoden hvis funnet */
+
+    int num_children = parent->num_children;
+
+    for (int i = 0; i < num_children; i++)
+    {
+        struct inode *child = parent->children[i];
+        if (strcmp(child->name, name) == 0)
+        {
+            return child;
+        }
+    }
+
+    return NULL;
+}
+
+struct inode *find_inode_by_id(struct inode *parent, int id)
+{
+    /* Ka - ikke testet
+    gå gjennom hvert barn og sjekk IDen deres
+    returner peker til barn-inoden hvis funnet */
+
+    int num_children = parent->num_children;
+
+    for (int i = 0; i < num_children; i++)
+    {
+        struct inode *child = parent->children[i];
+        if (child->id == id)
+        {
+            return child;
+        }
+    }
+
+
     return NULL;
 }
 
@@ -93,6 +135,7 @@ int delete_dir(struct inode *parent, struct inode *node)
  */
 struct inode *load_inodes(char *master_file_table)
 {
+
     File *file = fopen(master_file_table, "r");
     if (!file)
     {
@@ -184,6 +227,7 @@ struct inode *load_inode(char *master_file_table, long int offset)
 
     
     return inode, SEEK_CUR;
+
 }
 
 /* The function save_inode is a recursive functions that is
