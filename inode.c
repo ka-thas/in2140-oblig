@@ -137,10 +137,11 @@ struct inode *load_inodes(char *master_file_table)
         fprintf(stderr, "Failed to open file %s\n", master_file_table);
         return NULL;
     }
+    long int offset = 0;
     struct inode inodes[];
-    while (SEEK_CUR < SEEK_END)
+    while (offset < SEEK_END)
     {
-        inodes[i] = load_inode(master_file_table, SEEK_CUR);
+        inodes[i], offset = load_inode(master_file_table, offset);
         i++;
     }
 
@@ -160,7 +161,7 @@ struct inode *load_inodes(char *master_file_table)
         }
     return inode[0];
 };
-struct inode *load_inode(char *master_file_table, long int offset)
+struct inode, long int *load_inode(char *master_file_table, long int offset)
 {
 
     struct inode *inode;
