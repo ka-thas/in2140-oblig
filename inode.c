@@ -44,7 +44,7 @@ static int next_inode_id()
 
 struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 {
-    /* TODO */
+    /* TODO Christian */
     return NULL;
 }
 
@@ -54,9 +54,28 @@ struct inode *create_dir(struct inode *parent, char *name)
     return NULL;
 }
 
+/* Check all the inodes that are directly referenced by
+ * the node parent. If one of them has the name "name",
+ * its inode pointer is returned.
+ * parent must be directory.
+ */
 struct inode *find_inode_by_name(struct inode *parent, char *name)
 {
-    /* TODO */
+    /* TODO Ka
+    gå gjennom hvert barn og sjekk navnet deres
+    returner peker til inoden hvis funnet */
+
+    int num_children = parent->num_children;
+
+    for (int i = 0; i < num_children; i++)
+    {
+        struct inode *child = parent->children[i];
+        if (strcmp(child->name, name) == 0)
+        {
+            return child;
+        }
+    }
+
     return NULL;
 }
 
@@ -91,7 +110,7 @@ int delete_dir(struct inode *parent, struct inode *node)
  */
 struct inode *load_inodes(char *master_file_table)
 {
-    /* TODO */
+    /* TODO Iver */
     return NULL;
 }
 
