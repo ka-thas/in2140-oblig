@@ -99,11 +99,30 @@ struct inode *load_inodes(char *master_file_table)
         fprintf(stderr, "Failed to open file %s\n", master_file_table);
         return NULL;
     }
-    //one inode
+    struct inode inodes[];
+    while(SEEK_CUR < SEEK_END){
+        inodes[i] = load_inode(master_file_table, SEEK_CUR);
+        i++;
+    }
+
+    for inode in inodes{
+        if (inode->is_directory){
+            for (int i = 0; i < inode->num_children; i++){
+                if(inode->children[i] == inode[i].id){
+                    inode->children[i] = malloc(struct inode[i]);
+                }
+            }
+        }
+    }
+    return inode[0];
+
+};
+struct inode *load_inode(char *master_file_table, long int offset)
+{   
     
-
-
-    struct inode inode;
+    struct inode *inode; 
+    file = fopen(master_file_table, "r");
+    fseek(file, offset, SEEK_SET);
     
     int id;
     fgets(id, sizeof(int), file);
@@ -138,7 +157,6 @@ struct inode *load_inodes(char *master_file_table)
         for (int i = 0; i < num_children; i++){
             fgets(*children, sizeof(int), file);
             fseek(file, sizeof(int)*2, SEEK_CUR); //bug
-            struct inode *child = children[i];
             inode->children[i] = *children;
         }
     }
@@ -160,12 +178,12 @@ struct inode *load_inodes(char *master_file_table)
         inode->blocks = *blocks;
     }
 
-
-    inode = malloc(sizeof(struct inode));
-
     fclose(file);
+
+    inode = malloc(sizeof(struct inode*));
+
     
-    return NULL;
+    return inode, SEEK_CUR;
 }
 
 /* The function save_inode is a recursive functions that is
