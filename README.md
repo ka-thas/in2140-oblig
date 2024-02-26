@@ -31,17 +31,17 @@ It may be appropriate to implement the functions in this order:
 
 ## Implementation
 
-[ ] Create file
+[ ] Load File System - Iver
 
-[ ] Create Directory
+[x] Find Inode by Name - Ka
+
+[ ] Create file - Christian
+
+[ ] Create Directory - Ka
 
 [ ] Delete a file
 
 [ ] Delete a directory
-
-[ ] Find Inode by Name
-
-[ ] Load File System
 
 [ ] Shut Down File System
 

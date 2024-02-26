@@ -50,7 +50,8 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 
 struct inode *create_dir(struct inode *parent, char *name)
 {
-    /* TODO */
+    /* TODO Ka */
+
     return NULL;
 }
 
@@ -61,9 +62,9 @@ struct inode *create_dir(struct inode *parent, char *name)
  */
 struct inode *find_inode_by_name(struct inode *parent, char *name)
 {
-    /* TODO Ka
+    /* Ka - ikke testet
     gå gjennom hvert barn og sjekk navnet deres
-    returner peker til inoden hvis funnet */
+    returner peker til barn-inoden hvis funnet */
 
     int num_children = parent->num_children;
 
@@ -71,6 +72,26 @@ struct inode *find_inode_by_name(struct inode *parent, char *name)
     {
         struct inode *child = parent->children[i];
         if (strcmp(child->name, name) == 0)
+        {
+            return child;
+        }
+    }
+
+    return NULL;
+}
+
+struct inode *find_inode_by_id(struct inode *parent, int id)
+{
+    /* Ka - ikke testet
+    gå gjennom hvert barn og sjekk IDen deres
+    returner peker til barn-inoden hvis funnet */
+
+    int num_children = parent->num_children;
+
+    for (int i = 0; i < num_children; i++)
+    {
+        struct inode *child = parent->children[i];
+        if (child->id == id)
         {
             return child;
         }
