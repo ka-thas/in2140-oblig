@@ -131,7 +131,75 @@ int delete_dir(struct inode *parent, struct inode *node)
  */
 struct inode *load_inodes(char *master_file_table)
 {
-    /* TODO Iver */
+    File *file = fopen(master_file_table, "r");
+    if (!file)
+    {
+        fprintf(stderr, "Failed to open file %s\n", master_file_table);
+        return NULL;
+    }
+    // one inode
+
+    struct inode inode;
+
+    int id;
+    fgets(id, sizeof(int), file);
+    fseek(file, sizeof(int), SEEK_CUR);
+    inode->id = id;
+
+    int name_len;
+    fgets(name_len, sizeof(int), file);
+    fseek(file, sizeof(int), SEEK_CUR);
+    inode->name_len = name_len;
+
+    char *name_ptr;
+    fgets(*name_ptr, name_len, file);
+    fseek(file, name_len, SEEK_CUR);
+    inode->name = *name_ptr;
+
+    char is_directory;
+    fgets(is_directory, sizeof(char), file);
+    fseek(file, sizeof(char), SEEK_CUR);
+    inode->is_directory = is_directory;
+
+    if (is_directory)
+    {
+        int num_children;
+        fgets(num_children, sizeof(int), file);
+        fseek(file, sizeof(int), SEEK_CUR);
+        inode->num_children = num_children;
+
+        struct inode *children[num_children];
+
+        for (int i = 0; i < num_children; i++)
+        {
+            fgets(*children, sizeof(int), file);
+            fseek(file, sizeof(int) * 2, SEEK_CUR); // bug
+            struct inode *child = children[i];
+            inode->children[i] = *children;
+        }
+    }
+    else
+    {
+        int filesize;
+        fgets(filesize, sizeof(int), file);
+        fseek(file, sizeof(int), SEEK_CUR);
+        inode->filesize = filesize;
+
+        int num_blocks;
+        fgets(num_blocks, sizeof(int), file);
+        fseek(file, sizeof(int), SEEK_CUR);
+        inode->num_blocks = num_blocks;
+
+        size_t *blocks;
+        fgets(*blocks, num_blocks * BLOCKSIZE, file);
+        fseek(file, num_blocks * BLOCKSIZE, SEEK_CUR);
+        inode->blocks = *blocks;
+    }
+
+    inode = malloc(sizeof(struct inode));
+
+    fclose(file);
+
     return NULL;
 }
 
