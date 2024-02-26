@@ -62,6 +62,7 @@ struct inode *create_dir(struct inode *parent, char *name)
  */
 struct inode *find_inode_by_name(struct inode *parent, char *name)
 {
+
     /* Ka - ikke testet
     gå gjennom hvert barn og sjekk navnet deres
     returner peker til barn-inoden hvis funnet */
@@ -97,6 +98,7 @@ struct inode *find_inode_by_id(struct inode *parent, int id)
         }
     }
 
+
     return NULL;
 }
 
@@ -124,6 +126,8 @@ int delete_dir(struct inode *parent, struct inode *node)
     return 0;
 }
 
+
+
 /* Read the file master_file_table and create an inode in memory
  * for every inode that is stored in the file. Set the pointers
  * between inodes correctly.
@@ -131,8 +135,99 @@ int delete_dir(struct inode *parent, struct inode *node)
  */
 struct inode *load_inodes(char *master_file_table)
 {
-    /* TODO Iver */
-    return NULL;
+
+    File *file = fopen(master_file_table, "r");
+    if (!file)
+    {
+        fprintf(stderr, "Failed to open file %s\n", master_file_table);
+        return NULL;
+    }
+    struct inode inodes[];
+    while(SEEK_CUR < SEEK_END){
+        inodes[i] = load_inode(master_file_table, SEEK_CUR);
+        i++;
+    }
+
+    for inode in inodes{
+        if (inode->is_directory){
+            for (int i = 0; i < inode->num_children; i++){
+                if(inode->children[i] == inode[i].id){
+                    inode->children[i] = malloc(struct inode[i]);
+                }
+            }
+        }
+    }
+    return inode[0];
+
+};
+struct inode *load_inode(char *master_file_table, long int offset)
+{   
+    
+    struct inode *inode; 
+    file = fopen(master_file_table, "r");
+    fseek(file, offset, SEEK_SET);
+    
+    int id;
+    fgets(id, sizeof(int), file);
+    fseek(file, sizeof(int), SEEK_CUR);
+    inode->id = id;
+
+    int name_len;
+    fgets(name_len, sizeof(int), file);
+    fseek(file, sizeof(int), SEEK_CUR);
+    inode->name_len = name_len;
+
+    char *name_ptr;
+    fgets(*name_ptr, name_len, file);
+    fseek(file, name_len, SEEK_CUR);
+    inode->name = *name_ptr;
+
+    char is_directory;
+    fgets(is_directory, sizeof(char), file);
+    fseek(file, sizeof(char), SEEK_CUR);
+    inode->is_directory = is_directory;
+
+    if (is_directory)
+    {
+        int num_children;
+        fgets(num_children, sizeof(int), file);
+        fseek(file, sizeof(int), SEEK_CUR); 
+        inode->num_children = num_children;
+
+        struct inode *children[num_children];
+        
+
+        for (int i = 0; i < num_children; i++){
+            fgets(*children, sizeof(int), file);
+            fseek(file, sizeof(int)*2, SEEK_CUR); //bug
+            inode->children[i] = *children;
+        }
+    }
+    else
+    {
+        int filesize;
+        fgets(filesize, sizeof(int), file);
+        fseek(file, sizeof(int), SEEK_CUR);
+        inode->filesize = filesize;
+
+        int num_blocks;
+        fgets(num_blocks, sizeof(int), file);
+        fseek(file, sizeof(int), SEEK_CUR);
+        inode->num_blocks = num_blocks;
+
+        size_t *blocks;
+        fgets(*blocks, num_blocks*BLOCKSIZE, file);
+        fseek(file, num_blocks*BLOCKSIZE, SEEK_CUR);
+        inode->blocks = *blocks;
+    }
+
+    fclose(file);
+
+    inode = malloc(sizeof(struct inode*));
+
+    
+    return inode, SEEK_CUR;
+
 }
 
 /* The function save_inode is a recursive functions that is
