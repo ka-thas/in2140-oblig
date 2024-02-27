@@ -11,9 +11,7 @@
  */
 #define BLOCKSIZE 4096
 
-/* The lowest unused node ID.
- * Do not change.
- */
+// The lowest unused node ID.
 static int num_inode_ids = 0;
 
 /* This helper function computes the number of blocks that you must allocate
@@ -42,6 +40,16 @@ static int next_inode_id()
     return retval;
 }
 
+int *double_array_size(int *source, int size)
+{
+    int new_array[size * 2];
+    for (int i = 0; i < size; i++)
+    {
+        new_array[i] = source[i];
+    }
+    return new_array;
+}
+
 struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 {
   // creates file
@@ -64,7 +72,13 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 
 struct inode *create_dir(struct inode *parent, char *name)
 {
-    /* TODO Ka */
+    // TODO Ka
+
+    if (find_inode_by_name(parent, name) != NULL)
+    {
+        return NULL;
+    }
+
     struct inode dir;
     dir.id = next_inode_id();
     dir.name = name;
@@ -88,6 +102,10 @@ struct inode *find_inode_by_name(struct inode *parent, char *name)
     /* Ka - ikke testet
     gå gjennom hvert barn og sjekk navnet deres
     returner peker til barn-inoden hvis funnet */
+    if (parent->is_directory == 0)
+    {
+        return NULL;
+    }
 
     int num_children = parent->num_children;
 
@@ -109,6 +127,11 @@ struct inode *find_inode_by_id(struct inode *parent, int id)
     gå gjennom hvert barn og sjekk IDen deres
     returner peker til barn-inoden hvis funnet */
 
+    if (parent->is_directory == 0)
+    {
+        return NULL;
+    }
+
     int num_children = parent->num_children;
 
     for (int i = 0; i < num_children; i++)
@@ -125,25 +148,25 @@ struct inode *find_inode_by_id(struct inode *parent, int id)
 
 static int verified_delete_in_parent(struct inode *parent, struct inode *node)
 {
-    /* TODO */
+    // TODO
     return 0;
 }
 
 int is_node_in_parent(struct inode *parent, struct inode *node)
 {
-    /* TODO */
+    // TODO
     return 0;
 }
 
 int delete_file(struct inode *parent, struct inode *node)
 {
-    /* TODO */
+    // TODO
     return 0;
 }
 
 int delete_dir(struct inode *parent, struct inode *node)
 {
-    /* TODO */
+    // TODO
     return 0;
 }
 
@@ -155,31 +178,42 @@ int delete_dir(struct inode *parent, struct inode *node)
 struct inode *load_inodes(char *master_file_table)
 {
     FILE *file = fopen(master_file_table, "r");
+
     if (!file)
     {
         fprintf(stderr, "Failed to open file %s\n", master_file_table);
         return NULL;
     }
-    long int offset = 0;
-    int i = 0;
-    struct inode **inodes = NULL;
+
+    int offset = 0;
+    int j, k, l = 0;
+    int array_size = 8;
+    struct inode *inodes[array_size];
+
     while (offset < SEEK_END)
     {
-        long int **temp;
-        inodes[i] = load_inode(master_file_table, offset);
-        i++;
+        if (num_inode_ids >= array_size)
+        {
+            *inodes = double_array_size(inodes, array_size);
+            array_size = array_size * 2;
+        }
+
+        inodes[num_inode_ids] = load_inode(master_file_table, &offset);
     }
 
-    for (int j = 0; j < i; j++)
+    for (j; j < num_inode_ids; j++)
     {
-        if (inodes[i]->is_directory)
+        if (inodes[j]->is_directory)
         {
-            for (int k = 0; k < inodes[i]->num_children; k++)
+            for (k; k < inodes[j]->num_children; k++)
             {
-                if (inodes[i]->children[k] == inodes[k]->id)
+                for (l; l < num_inode_ids; l++)
                 {
-                    inodes[i]->children[k] = malloc(sizeof(struct inode));
-                    break;
+                    if (inodes[j]->children[k] == inodes[num_inode_ids]->id)
+                    {
+                        inodes[j]->children[k] = malloc(sizeof(struct inode));
+                        break;
+                    }
                 }
             }
         }
@@ -187,12 +221,14 @@ struct inode *load_inodes(char *master_file_table)
     return inodes[0];
 }
 
-long int **load_inode(char *master_file_table, long int offset)
+/* Hjelpefunksjon for load_inodes */
+struct inode *load_inode(char *master_file_table, int *offset)
 {
+    next_inode_id();
 
     struct inode *inode;
     FILE *file = fopen(master_file_table, "r");
-    fseek(file, offset, SEEK_SET);
+    fseek(file, *offset, SEEK_SET);
 
     int id;
     fgets(id, sizeof(int), file);
