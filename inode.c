@@ -50,7 +50,7 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
     file.name = name;
     file.is_directory = 0;
     file.filesize = size_in_bytes;
-    file.num_blocks = size_in_bytes/4096; 
+    file.num_blocks = blocks_needed(size_in_bytes); 
     size_t* blocks = (size_t*)malloc(file.num_blocks * sizeof(size_t));
     file.blocks = blocks;
     
