@@ -44,8 +44,22 @@ static int next_inode_id()
 
 struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 {
-    /* TODO Christian */
-    return NULL;
+  // creates file
+    struct inode file;
+    file.id = next_inode_id();
+    file.name = name;
+    file.is_directory = 0;
+    file.filesize = size_in_bytes;
+    file.num_blocks = size_in_bytes/4096; 
+    size_t* blocks = (size_t*)malloc(file.num_blocks * sizeof(size_t));
+    file.blocks = blocks;
+    
+    // update parent
+    parent -> children ++;
+    int last = parent -> num_children - 1;
+    parent -> children[last] = file;
+   
+    return &file; 
 }
 
 struct inode *create_dir(struct inode *parent, char *name)
