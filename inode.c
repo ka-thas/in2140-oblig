@@ -50,6 +50,7 @@ int *double_array_size(int *source, int size)
     return new_array;
 }
 
+/* Oppretter en fil. */
 struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 {
     if (find_inode_by_name(parent, name) != NULL)
@@ -68,9 +69,9 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
     file.blocks = blocks;
 
     // update parent
-    parent->children++;
+    parent->num_children++;
     int last = parent->num_children - 1;
-    parent->children[last] = file;
+    parent->children[last] = &file;
 
     return &file;
 }
