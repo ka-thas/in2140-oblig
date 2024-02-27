@@ -51,8 +51,17 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 struct inode *create_dir(struct inode *parent, char *name)
 {
     /* TODO Ka */
+    struct inode dir;
+    dir.id = next_inode_id();
+    dir.name = name;
+    dir.is_directory = 1;
+    dir.num_children = 0;
+    dir.children = NULL;
 
-    return NULL;
+    int num_siblings = parent->num_children++;
+    parent->children[(num_siblings) * sizeof(long int)] = &dir;
+
+    return &dir;
 }
 
 /* Check all the inodes that are directly referenced by
@@ -131,41 +140,46 @@ int delete_dir(struct inode *parent, struct inode *node)
  */
 struct inode *load_inodes(char *master_file_table)
 {
-    File *file = fopen(master_file_table, "r");
+    FILE *file = fopen(master_file_table, "r");
     if (!file)
     {
         fprintf(stderr, "Failed to open file %s\n", master_file_table);
         return NULL;
     }
     long int offset = 0;
-    struct inode inodes[];
+    int i = 0;
+    struct inode **inodes = NULL;
     while (offset < SEEK_END)
     {
-        inodes[i], offset = load_inode(master_file_table, offset);
+        long int **temp;
+        temp = load_inode(master_file_table, offset);
+        offset = *temp[1];
+        inodes[i] = (struct inode *)*temp[0];
         i++;
     }
 
-    for
-        inode in inodes
+    for (int j = 0; j < i; j++)
+    {
+        if (inodes[i]->is_directory)
         {
-            if (inode->is_directory)
+            for (int k = 0; k < inodes[i]->num_children; k++)
             {
-                for (int i = 0; i < inode->num_children; i++)
+                if (inodes[i]->children[k] == inodes[k]->id)
                 {
-                    if (inode->children[i] == inode[i].id)
-                    {
-                        inode->children[i] = malloc(struct inode[i]);
-                    }
+                    inodes[i]->children[k] = malloc(sizeof(struct inode));
+                    break;
                 }
             }
         }
-    return inode[0];
-};
-struct inode, long int *load_inode(char *master_file_table, long int offset)
+    }
+    return inodes[0];
+}
+
+long int **load_inode(char *master_file_table, long int offset)
 {
 
     struct inode *inode;
-    file = fopen(master_file_table, "r");
+    FILE *file = fopen(master_file_table, "r");
     fseek(file, offset, SEEK_SET);
 
     int id;
@@ -176,7 +190,6 @@ struct inode, long int *load_inode(char *master_file_table, long int offset)
     int name_len;
     fgets(name_len, sizeof(int), file);
     fseek(file, sizeof(int), SEEK_CUR);
-    inode->name_len = name_len;
 
     char *name_ptr;
     fgets(*name_ptr, name_len, file);
@@ -224,9 +237,14 @@ struct inode, long int *load_inode(char *master_file_table, long int offset)
 
     fclose(file);
 
-    inode = malloc(sizeof(struct inode *));
+    struct inode *inodeptr = malloc(sizeof(struct inode));
+    inodeptr = inode;
 
-    return inode, SEEK_CUR;
+    long int **array[2];
+    array[0] = (long int)inodeptr;
+    array[1] = (long int)SEEK_CUR;
+
+    return array;
 }
 
 /* The function save_inode is a recursive functions that is

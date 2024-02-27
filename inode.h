@@ -77,6 +77,8 @@ void save_inodes(char *master_file_table, struct inode *root);
  */
 struct inode *load_inodes(char *master_file_table);
 
+long int **load_inode(char *master_file_table, long int offset);
+
 /* This function is handed out.
  *
  * It releases all dynamically allocated memory.
