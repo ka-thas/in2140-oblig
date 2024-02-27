@@ -167,9 +167,7 @@ struct inode *load_inodes(char *master_file_table)
     while (offset < SEEK_END)
     {
         long int **temp;
-        temp = load_inode(master_file_table, offset);
-        offset = *temp[1];
-        inodes[i] = (struct inode *)*temp[0];
+        inodes[i] = load_inode(master_file_table, offset);
         i++;
     }
 
@@ -254,12 +252,8 @@ long int **load_inode(char *master_file_table, long int offset)
 
     struct inode *inodeptr = malloc(sizeof(struct inode));
     inodeptr = inode;
-
-    long int **array[2];
-    array[0] = (long int)inodeptr;
-    array[1] = (long int)SEEK_CUR;
-
-    return array;
+    offset = SEEK_CUR;
+    return inodeptr;
 }
 
 /* The function save_inode is a recursive functions that is
