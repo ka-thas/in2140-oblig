@@ -51,6 +51,12 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 struct inode *create_dir(struct inode *parent, char *name)
 {
     /* TODO Ka */
+
+    if (find_inode_by_name(parent, name) != NULL)
+    {
+        return NULL;
+    }
+
     struct inode dir;
     dir.id = next_inode_id();
     dir.name = name;
@@ -74,6 +80,10 @@ struct inode *find_inode_by_name(struct inode *parent, char *name)
     /* Ka - ikke testet
     gå gjennom hvert barn og sjekk navnet deres
     returner peker til barn-inoden hvis funnet */
+    if (parent->is_directory == 0)
+    {
+        return NULL;
+    }
 
     int num_children = parent->num_children;
 
@@ -94,6 +104,11 @@ struct inode *find_inode_by_id(struct inode *parent, int id)
     /* Ka - ikke testet
     gå gjennom hvert barn og sjekk IDen deres
     returner peker til barn-inoden hvis funnet */
+
+    if (parent->is_directory == 0)
+    {
+        return NULL;
+    }
 
     int num_children = parent->num_children;
 
