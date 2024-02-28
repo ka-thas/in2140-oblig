@@ -153,24 +153,32 @@ struct inode *find_inode_by_id(struct inode *parent, int id)
 static int verified_delete_in_parent(struct inode *parent, struct inode *node)
 {
     // TODO
+    (void)parent;
+    (void)node;
     return 0;
 }
 
 int is_node_in_parent(struct inode *parent, struct inode *node)
 {
     // TODO
+    (void)parent;
+    (void)node;
     return 0;
 }
 
 int delete_file(struct inode *parent, struct inode *node)
 {
     // TODO
+    (void)parent;
+    (void)node;
     return 0;
 }
 
 int delete_dir(struct inode *parent, struct inode *node)
 {
     // TODO
+    (void)parent;
+    (void)node;
     return 0;
 }
 
@@ -226,7 +234,7 @@ struct inode *load_inodes(char *master_file_table)
 }
 
 /* Hjelpefunksjon for load_inodes */
-struct inode *load_inode(char *master_file_table, int *offset)
+struct inode *create_inode(char *master_file_table, int *offset)
 {
     next_inode_id();
 
