@@ -200,17 +200,18 @@ struct inode *load_inodes(char *master_file_table)
     int offset = 0;
     int j, k, l = 0;
     int array_size = 8;
-    struct inode *inodes[array_size];
+    struct inode **inodes = malloc(sizeof(struct inode *) * array_size);
 
     while (offset < SEEK_END)
     {
         if (num_inode_ids >= array_size)
         {
-            *inodes = double_array_size(inodes, array_size);
             array_size = array_size * 2;
+            inodes = realloc(inodes, sizeof(struct inode *) * array_size);
+            // TODO: check malloc
         }
 
-        inodes[num_inode_ids] = load_inode(master_file_table, &offset);
+        inodes[num_inode_ids] = create_inode(master_file_table, &offset);
     }
 
     for (j; j < num_inode_ids; j++)
@@ -230,7 +231,9 @@ struct inode *load_inodes(char *master_file_table)
             }
         }
     }
-    return inodes[0];
+    struct inode *root = inodes[0];
+    free(inodes);
+    return root;
 }
 
 /* Hjelpefunksjon for load_inodes */
@@ -238,24 +241,29 @@ struct inode *create_inode(char *master_file_table, int *offset)
 {
     next_inode_id();
 
+    // prep
     struct inode *inode;
     FILE *file = fopen(master_file_table, "r");
     fseek(file, *offset, SEEK_SET);
 
+    // ID
     int id;
     fgets(id, sizeof(int), file);
     fseek(file, sizeof(int), SEEK_CUR);
     inode->id = id;
 
+    // name_len;
     int name_len;
     fgets(name_len, sizeof(int), file);
     fseek(file, sizeof(int), SEEK_CUR);
 
+    // name
     char *name_ptr;
     fgets(*name_ptr, name_len, file);
     fseek(file, name_len, SEEK_CUR);
     inode->name = *name_ptr;
 
+    // is_directory
     char is_directory;
     fgets(is_directory, sizeof(char), file);
     fseek(file, sizeof(char), SEEK_CUR);
