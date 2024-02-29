@@ -115,31 +115,6 @@ struct inode *find_inode_by_name(struct inode *parent, char *name)
     return NULL;
 }
 
-struct inode *find_inode_by_id(struct inode *parent, int id)
-{
-    /* Ka - ikke testet
-    gå gjennom hvert barn og sjekk IDen deres
-    returner peker til barn-inoden hvis funnet */
-
-    if (parent->is_directory == 0)
-    {
-        return NULL;
-    }
-
-    int num_children = parent->num_children;
-
-    for (int i = 0; i < num_children; i++)
-    {
-        struct inode *child = parent->children[i];
-        if (child->id == id)
-        {
-            return child;
-        }
-    }
-
-    return NULL;
-}
-
 static int verified_delete_in_parent(struct inode *parent, struct inode *node)
 {
     // TODO
@@ -212,15 +187,16 @@ struct inode *load_inodes(char *master_file_table)
 
     for (j = 0; j < num_inode_ids; j++)
     {
-        if (inodes[j]->is_directory)
+        if (inodes[j]->is_directory) // for each directory
         {
-            for (k = 0; k < inodes[j]->num_children; k++)
+            for (k = 0; k < inodes[j]->num_children; k++) // for each child
             {
                 for (l = 0; l < num_inode_ids; l++)
                 {
-                    if (inodes[j]->children[k] == inodes[l]->id)
+                    if (inodes[j]->children[k]->id == inodes[l]->id)
                     {
                         inodes[j]->children[k] = malloc(sizeof(struct inode));
+                        inodes[j]->children[k] = inodes[l];
                         break;
                     }
                 }
