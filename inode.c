@@ -188,7 +188,7 @@ struct inode *load_inodes(char *master_file_table)
     }
 
     int offset = 0;
-    int j, k, l = 0;
+    int j = 0, k = 0, l = 0; // Initialize j, k, l to 0
     int array_size = 8;
     struct inode **inodes = malloc(sizeof(struct inode *) * array_size);
 
@@ -199,20 +199,26 @@ struct inode *load_inodes(char *master_file_table)
             array_size = array_size * 2;
             inodes = realloc(inodes, sizeof(struct inode *) * array_size);
             // TODO: check malloc
+            if (inodes == NULL)
+            {
+                fprintf(stderr, "Failed to allocate memory for inodes\n");
+                return NULL;
+            }
         }
 
         inodes[num_inode_ids] = create_inode(master_file_table, &offset);
+        num_inode_ids++; // Increment num_inode_ids
     }
 
-    for (j; j < num_inode_ids; j++)
+    for (j = 0; j < num_inode_ids; j++) // Assign j = 0
     {
         if (inodes[j]->is_directory)
         {
-            for (k; k < inodes[j]->num_children; k++)
+            for (k = 0; k < inodes[j]->num_children; k++) // Assign k = 0
             {
-                for (l; l < num_inode_ids; l++)
+                for (l = 0; l < num_inode_ids; l++) // Assign l = 0
                 {
-                    if (inodes[j]->children[k] == inodes[num_inode_ids]->id)
+                    if (inodes[j]->children[k] == inodes[l]->id) // Use l instead of num_inode_ids
                     {
                         inodes[j]->children[k] = malloc(sizeof(struct inode));
                         break;
@@ -232,73 +238,72 @@ struct inode *create_inode(char *master_file_table, int *offset)
     next_inode_id();
 
     // prep
-    struct inode *inode;
+    struct inode *inode = malloc(sizeof(struct inode)); // Allocate memory for inode
     FILE *file = fopen(master_file_table, "r");
     fseek(file, *offset, SEEK_SET);
 
     // ID
     int id;
-    fgets(id, sizeof(int), file);
+    fread(&id, sizeof(int), 1, file); // Use fread to read id
     fseek(file, sizeof(int), SEEK_CUR);
     inode->id = id;
 
     // name_len;
     int name_len;
-    fgets(name_len, sizeof(int), file);
+    fread(&name_len, sizeof(int), 1, file); // Use fread to read name_len
     fseek(file, sizeof(int), SEEK_CUR);
 
     // name
-    char *name_ptr;
-    fgets(*name_ptr, name_len, file);
+    char *name_ptr = malloc(name_len);  // Allocate memory for name_ptr
+    fread(name_ptr, 1, name_len, file); // Use fread to read name_ptr
     fseek(file, name_len, SEEK_CUR);
-    inode->name = *name_ptr;
+    inode->name = name_ptr;
 
     // is_directory
     char is_directory;
-    fgets(is_directory, sizeof(char), file);
+    fread(&is_directory, sizeof(char), 1, file); // Use fread to read is_directory
     fseek(file, sizeof(char), SEEK_CUR);
     inode->is_directory = is_directory;
 
     if (is_directory)
     {
         int num_children;
-        fgets(num_children, sizeof(int), file);
+        fread(&num_children, sizeof(int), 1, file); // Use fread to read num_children
         fseek(file, sizeof(int), SEEK_CUR);
         inode->num_children = num_children;
 
-        struct inode *children[num_children];
+        struct inode **children = malloc(sizeof(struct inode *) * num_children); // Allocate memory for children
 
         for (int i = 0; i < num_children; i++)
         {
-            fgets(*children, sizeof(int), file);
-            fseek(file, sizeof(int) * 2, SEEK_CUR); // bug
-            inode->children[i] = *children;
+            size_t child_id;                           // Use size_t for child_id
+            fread(&child_id, sizeof(size_t), 1, file); // Use fread to read child_id
+            fseek(file, sizeof(int) * 2, SEEK_CUR);    // Use sizeof(int) * 2 to skip the correct number of bytes
+            children[i] = inodes[child_id];            // Assign the correct child inode
         }
+        inode->children = children; // Assign children to inode->children
     }
     else
     {
         int filesize;
-        fgets(filesize, sizeof(int), file);
+        fread(&filesize, sizeof(int), 1, file); // Use fread to read filesize
         fseek(file, sizeof(int), SEEK_CUR);
         inode->filesize = filesize;
 
         int num_blocks;
-        fgets(num_blocks, sizeof(int), file);
+        fread(&num_blocks, sizeof(int), 1, file); // Use fread to read num_blocks
         fseek(file, sizeof(int), SEEK_CUR);
         inode->num_blocks = num_blocks;
 
-        size_t *blocks;
-        fgets(*blocks, num_blocks * BLOCKSIZE, file);
-        fseek(file, num_blocks * BLOCKSIZE, SEEK_CUR);
-        inode->blocks = *blocks;
+        size_t *blocks = malloc(sizeof(size_t) * num_blocks); // Allocate memory for blocks
+        fread(blocks, sizeof(size_t), num_blocks, file);      // Use fread to read blocks
+        fseek(file, num_blocks * sizeof(size_t), SEEK_CUR);
+        inode->blocks = blocks;
     }
 
     fclose(file);
 
-    struct inode *inodeptr = malloc(sizeof(struct inode));
-    inodeptr = inode;
-    offset = SEEK_CUR;
-    return inodeptr;
+    return inode;
 }
 
 /* The function save_inode is a recursive functions that is
