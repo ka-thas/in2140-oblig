@@ -40,16 +40,6 @@ static int next_inode_id()
     return retval;
 }
 
-int *double_array_size(int *source, int size)
-{
-    int new_array[size * 2];
-    for (int i = 0; i < size; i++)
-    {
-        new_array[i] = source[i];
-    }
-    return new_array;
-}
-
 /* Oppretter en fil. */
 struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 {
