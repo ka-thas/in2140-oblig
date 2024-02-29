@@ -272,29 +272,16 @@ struct inode *create_inode(char *master_file_table, int *offset)
         fseek(file, sizeof(int), SEEK_CUR);
         inode->num_children = num_children;
 
-        struct inode **children = malloc(sizeof(struct inode *) * num_children); // Allocate memory for children
+        double **children = malloc(sizeof(double *) * num_children);
 
         for (int i = 0; i < num_children; i++)
         {
-            size_t child_id; // Use size_t for child_id
-            fread(&child_id, sizeof(size_t), 1, file);
-            fseek(file, sizeof(int) * 2, SEEK_CUR);                                 // Use sizeof(int) * 2 to skip the correct number of bytes
-            struct inode **inodes = malloc(sizeof(struct inode *) * num_inode_ids); // Declare the inodes array
-            for (int i = 0; i < num_inode_ids; i++)
-            {
-                inodes[i] = NULL; // Initialize each element to NULL
-            }
-            for (i = 0; i < num_inode_ids; i++)
-            {
-                if (inodes[i] == NULL)
-                {
-                    inodes[i] = create_inode(master_file_table, offset);
-                }
-            }
-            // Assign the correct child inode
-            children[i] = inodes[child_id];
+            double *child_id;
+            fread(child_id, sizeof(size_t), 1, file);
+            fseek(file, sizeof(size_t), SEEK_CUR);
+            children[i] = child_id;
         }
-        inode->children = children; // Assign children to inode->children
+        inode->children = children;
     }
     else
     {
@@ -308,9 +295,9 @@ struct inode *create_inode(char *master_file_table, int *offset)
         fseek(file, sizeof(int), SEEK_CUR);
         inode->num_blocks = num_blocks;
 
-        size_t *blocks = malloc(sizeof(size_t) * num_blocks); // Allocate memory for blocks
-        fread(blocks, sizeof(size_t), num_blocks, file);
-        fseek(file, num_blocks * sizeof(size_t), SEEK_CUR);
+        double *blocks = malloc(sizeof(double) * num_blocks);
+        fread(blocks, sizeof(double), num_blocks, file);
+        fseek(file, num_blocks * sizeof(double), SEEK_CUR);
         inode->blocks = blocks;
     }
 
