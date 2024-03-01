@@ -77,7 +77,7 @@ void save_inodes(char *master_file_table, struct inode *root);
  */
 struct inode *load_inodes(char *master_file_table);
 
-struct inode *create_inode(char *master_file_table, int *offset);
+struct inode *load_inodes_recursive(FILE *file, int *offset);
 
 /* This function is handed out.
  *

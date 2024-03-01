@@ -152,6 +152,7 @@ int delete_dir(struct inode *parent, struct inode *node)
  * between inodes correctly.
  * The file master_file_table remains unchanged.
  */
+
 struct inode *load_inodes(char *master_file_table)
 {
     FILE *file = fopen(master_file_table, "r");
@@ -163,59 +164,18 @@ struct inode *load_inodes(char *master_file_table)
     }
 
     int offset = 0;
-    int j = 0, k = 0, l = 0;
-    int array_size = 8;
-    struct inode **inodes = malloc(sizeof(struct inode *) * array_size);
+    struct inode *root = load_inodes_recursive(file, &offset);
 
-    // Read the file and create inodes
-    while (offset < SEEK_END)
-    {
-        if (num_inode_ids >= array_size)
-        {
-            array_size = array_size * 2;
-            inodes = realloc(inodes, sizeof(struct inode *) * array_size);
-            if (inodes == NULL)
-            {
-                fprintf(stderr, "Failed to allocate memory for inodes\n");
-                return NULL;
-            }
-        }
-
-        inodes[num_inode_ids] = create_inode(master_file_table, &offset);
-        num_inode_ids++;
-    }
-
-    for (j = 0; j < num_inode_ids; j++)
-    {
-        if (inodes[j]->is_directory) // for each directory
-        {
-            for (k = 0; k < inodes[j]->num_children; k++) // for each child
-            {
-                for (l = 0; l < num_inode_ids; l++)
-                {
-                    if (inodes[j]->children[k]->id == inodes[l]->id)
-                    {
-                        inodes[j]->children[k] = malloc(sizeof(struct inode));
-                        inodes[j]->children[k] = inodes[l];
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    struct inode *root = inodes[0];
-    free(inodes);
+    fclose(file);
     return root;
 }
 
-// helper function for load_inodes
-struct inode *create_inode(char *master_file_table, int *offset)
+struct inode *load_inodes_recursive(FILE *file, int *offset)
 {
     next_inode_id();
 
     // prep
-    struct inode *inode = malloc(sizeof(struct inode)); // Allocate memory for inode
-    FILE *file = fopen(master_file_table, "r");
+    struct inode *inode = malloc(sizeof(struct inode));
     fseek(file, *offset, SEEK_SET);
 
     // ID
@@ -230,7 +190,7 @@ struct inode *create_inode(char *master_file_table, int *offset)
     fseek(file, sizeof(int), SEEK_CUR);
 
     // name
-    char *name_ptr = malloc(name_len); // Allocate memory for name_ptr
+    char *name_ptr = malloc(name_len);
     fread(name_ptr, 1, name_len, file);
     fseek(file, name_len, SEEK_CUR);
     inode->name = name_ptr;
@@ -248,14 +208,11 @@ struct inode *create_inode(char *master_file_table, int *offset)
         fseek(file, sizeof(int), SEEK_CUR);
         inode->num_children = num_children;
 
-        double **children = malloc(sizeof(double *) * num_children);
+        struct inode **children = malloc(sizeof(struct inode *) * num_children);
 
         for (int i = 0; i < num_children; i++)
         {
-            double *child_id;
-            fread(child_id, sizeof(size_t), 1, file);
-            fseek(file, sizeof(size_t), SEEK_CUR);
-            children[i] = child_id;
+            children[i] = load_inodes_recursive(file, offset);
         }
         inode->children = children;
     }
@@ -276,8 +233,6 @@ struct inode *create_inode(char *master_file_table, int *offset)
         fseek(file, num_blocks * sizeof(double), SEEK_CUR);
         inode->blocks = blocks;
     }
-
-    fclose(file);
 
     return inode;
 }
