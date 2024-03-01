@@ -93,8 +93,7 @@ struct inode *create_dir(struct inode *parent, char *name)
  */
 struct inode *find_inode_by_name(struct inode *parent, char *name)
 {
-    /* Ka - ikke testet
-    gå gjennom hvert barn og sjekk navnet deres
+    /* gå gjennom hvert barn og sjekk navnet deres
     returner peker til barn-inoden hvis funnet */
     if (parent->is_directory == 0)
     {
@@ -125,9 +124,14 @@ static int verified_delete_in_parent(struct inode *parent, struct inode *node)
 
 int is_node_in_parent(struct inode *parent, struct inode *node)
 {
-    // TODO
-    (void)parent;
-    (void)node;
+    int i = parent->num_children;
+    for (int j = 0; j < i; j++)
+    {
+        if (parent->children[j] == node)
+        {
+            return 1;
+        }
+    }
     return 0;
 }
 
@@ -145,29 +149,6 @@ int delete_dir(struct inode *parent, struct inode *node)
     (void)parent;
     (void)node;
     return 0;
-}
-
-/* Read the file master_file_table and create an inode in memory
- * for every inode that is stored in the file. Set the pointers
- * between inodes correctly.
- * The file master_file_table remains unchanged.
- */
-
-struct inode *load_inodes(char *master_file_table)
-{
-    FILE *file = fopen(master_file_table, "r");
-
-    if (!file)
-    {
-        fprintf(stderr, "Failed to open file %s\n", master_file_table);
-        return NULL;
-    }
-
-    int offset = 0;
-    struct inode *root = load_inodes_recursive(file, &offset);
-
-    fclose(file);
-    return root;
 }
 
 struct inode *load_inodes_recursive(FILE *file, int *offset)
@@ -228,13 +209,35 @@ struct inode *load_inodes_recursive(FILE *file, int *offset)
         fseek(file, sizeof(int), SEEK_CUR);
         inode->num_blocks = num_blocks;
 
-        double *blocks = malloc(sizeof(double) * num_blocks);
-        fread(blocks, sizeof(double), num_blocks, file);
-        fseek(file, num_blocks * sizeof(double), SEEK_CUR);
+        size_t *blocks = malloc(sizeof(size_t) * num_blocks);
+        fread(blocks, sizeof(size_t), num_blocks, file);
+        fseek(file, num_blocks * sizeof(size_t), SEEK_CUR);
         inode->blocks = blocks;
     }
 
     return inode;
+}
+
+/* Read the file master_file_table and create an inode in memory
+ * for every inode that is stored in the file. Set the pointers
+ * between inodes correctly.
+ * The file master_file_table remains unchanged.
+ */
+struct inode *load_inodes(char *master_file_table)
+{
+    FILE *file = fopen(master_file_table, "r");
+
+    if (!file)
+    {
+        fprintf(stderr, "Failed to open file %s\n", master_file_table);
+        return NULL;
+    }
+
+    int offset = 0;
+    struct inode *root = load_inodes_recursive(file, &offset);
+
+    fclose(file);
+    return root;
 }
 
 /* The function save_inode is a recursive functions that is
