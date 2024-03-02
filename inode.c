@@ -151,49 +151,50 @@ int delete_dir(struct inode *parent, struct inode *node)
     return 0;
 }
 
-struct inode *load_inodes_recursive(FILE *file, int *offset)
+// TODO
+struct inode *load_inodes_recursive(FILE *file, int *reader)
 {
     next_inode_id();
 
     // prep
     struct inode *inode = malloc(sizeof(struct inode));
-    fseek(file, *offset, SEEK_SET);
+    fseek(file, *reader, SEEK_SET);
 
     // ID
     int id;
     fread(&id, sizeof(int), 1, file);
-    fseek(file, sizeof(int), SEEK_CUR);
+    *reader += sizeof(int);
     inode->id = id;
 
     // name_len;
     int name_len;
     fread(&name_len, sizeof(int), 1, file);
-    fseek(file, sizeof(int), SEEK_CUR);
+    *reader += sizeof(int);
 
     // name
     char *name_ptr = malloc(name_len);
     fread(name_ptr, 1, name_len, file);
-    fseek(file, name_len, SEEK_CUR);
+    *reader += sizeof(char) * name_len;
     inode->name = name_ptr;
 
     // is_directory
     char is_directory;
     fread(&is_directory, sizeof(char), 1, file);
-    fseek(file, sizeof(char), SEEK_CUR);
+    *reader += sizeof(char);
     inode->is_directory = is_directory;
 
     if (is_directory)
     {
         int num_children;
         fread(&num_children, sizeof(int), 1, file);
-        fseek(file, sizeof(int), SEEK_CUR);
         inode->num_children = num_children;
 
         struct inode **children = malloc(sizeof(struct inode *) * num_children);
 
+        int new_reader = *reader;
         for (int i = 0; i < num_children; i++)
         {
-            children[i] = load_inodes_recursive(file, offset);
+            children[i] = load_inodes_recursive(file, &new_reader);
         }
         inode->children = children;
     }
@@ -233,8 +234,8 @@ struct inode *load_inodes(char *master_file_table)
         return NULL;
     }
 
-    int offset = 0;
-    struct inode *root = load_inodes_recursive(file, &offset);
+    int reader = 0;
+    struct inode *root = load_inodes_recursive(file, &reader);
 
     fclose(file);
     return root;
