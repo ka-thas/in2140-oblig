@@ -171,13 +171,40 @@ int is_node_in_parent(struct inode *parent, struct inode *node)
     return 0;
 }
 
+
+
 int delete_file(struct inode *parent, struct inode *node)
 {
-    // TODO
-    (void)parent;
-    (void)node;
-    return 0;
+	
+	
+	// if inode exists in parent:
+	if (find_inode_by_name(parent, node -> name) != NULL)
+        {
+    		// frees blocks
+    		size_t *blockarr = node -> blocks;
+    		for (int i = 0; i < node -> num_blocks; i ++)
+    		{
+    			free_block(blockarr[i]);
+    		
+    		}
+    		// frees node
+    		free(node -> name);
+    		free(node -> blocks);
+    		free(node);
+    		
+    		// updates parent
+    		parent -> num_children --;
+		parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode *));
+   
+    		
+   	}
+   	
+   	else
+   	{
+   		return -1;
+   	}
 }
+
 
 int delete_dir(struct inode *parent, struct inode *node)
 {
