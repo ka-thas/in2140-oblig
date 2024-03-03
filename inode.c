@@ -163,9 +163,9 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
     // ID
     int id;
     fread(&id, sizeof(int), 1, file);
-    *reader += sizeof(int);
     inode->id = id;
-    printf("--- ID: %d\n", id);
+    *reader += sizeof(int);
+    printf("--- ID: 0x%x\n", id);
 
     // name_len;
     int name_len;
@@ -175,50 +175,63 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
     // name
     char *name_ptr = malloc(name_len);
     fread(name_ptr, 1, name_len, file);
-    *reader += sizeof(char) * name_len;
     inode->name = name_ptr;
+    *reader += sizeof(char) * name_len;
     printf("Name: %s\n", name_ptr);
 
     // is_directory
     char is_directory;
     fread(&is_directory, sizeof(char), 1, file);
-    *reader += sizeof(char);
     inode->is_directory = is_directory;
+    *reader += sizeof(char);
 
     if (is_directory)
     {
         int num_children;
         fread(&num_children, sizeof(int), 1, file);
-        *reader += sizeof(int);
         inode->num_children = num_children;
+        *reader += sizeof(int);
+
+        if (num_children == 0)
+        {
+            inode->children = NULL;
+            printf("Finished directory %s\n", name_ptr);
+            return inode;
+        }
 
         struct inode **children = malloc(sizeof(struct inode *) * num_children);
 
-        int new_reader = *reader;
         for (int i = 0; i < num_children; i++)
         {
-            printf("%s->children[%d] = \n", name_ptr, i);
-            children[i] = load_inodes_recursive(file, &new_reader);
+            printf("%s -> children[%d] \n", name_ptr, i);
+            children[i] = load_inodes_recursive(file, reader);
         }
+
+        *reader += sizeof(size_t) * num_children;
         inode->children = children;
+
         printf("Finished directory %s\n", name_ptr);
     }
     else
     {
+        // filesize
         int filesize;
         fread(&filesize, sizeof(int), 1, file);
-        fseek(file, sizeof(int), SEEK_CUR);
         inode->filesize = filesize;
+        *reader += sizeof(int);
 
+        // num_blocks
         int num_blocks;
         fread(&num_blocks, sizeof(int), 1, file);
-        fseek(file, sizeof(int), SEEK_CUR);
         inode->num_blocks = num_blocks;
+        *reader += sizeof(int);
 
+        // blocks
         size_t *blocks = malloc(sizeof(size_t) * num_blocks);
         fread(blocks, sizeof(size_t), num_blocks, file);
-        fseek(file, num_blocks * sizeof(size_t), SEEK_CUR);
         inode->blocks = blocks;
+        *reader += sizeof(size_t) * num_blocks;
+
         printf("Finished file %s\n", name_ptr);
     }
     return inode;

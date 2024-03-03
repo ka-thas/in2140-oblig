@@ -130,4 +130,4 @@ gdb_del_fs: del_fs
 
 gdb_test: gdb_create_fs_1 gdb_create_fs_2 gdb_create_fs_3 gdb_load_fs gdb_del_fs
 
-gdb -ex run --args ./load_fs load_example1/master_file_table load_example1/block_allocation_table
+# gdb --args ./load_fs load_example1/master_file_table load_example1/block_allocation_table
