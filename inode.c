@@ -150,6 +150,7 @@ struct inode *find_inode_by_name(struct inode *parent, char *name)
     return NULL;
 }
 
+//Hjelpefunksjon ubrukt
 static int verified_delete_in_parent(struct inode *parent, struct inode *node)
 {
     // TODO
@@ -171,20 +172,32 @@ int is_node_in_parent(struct inode *parent, struct inode *node)
     return 0;
 }
 
+
 int delete_file(struct inode *parent, struct inode *node)
 {
-    // TODO
-    (void)parent;
-    (void)node;
+    for (int i = 0; i < node->num_blocks; i++)
+    {
+        free_block(node->blocks[i]);
+    }
+    parent->num_children--;
+    parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode));
+    free(node);
     return 0;
 }
 
 int delete_dir(struct inode *parent, struct inode *node)
 {
-    // TODO
-    (void)parent;
-    (void)node;
-    return 0;
+    if (node->num_children > 0)
+    {
+        return -1;
+    }
+    else
+    {
+        parent->num_children--;
+        parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode));
+        free(node);
+        return 0;
+    }
 }
 
 // TODO
