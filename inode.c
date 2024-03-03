@@ -43,28 +43,64 @@ static int next_inode_id()
 /* Oppretter en fil. */
 struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 {
+
     if (find_inode_by_name(parent, name) != NULL)
     {
-        return NULL;
+    	return NULL;
+    }
+    
+    // allocation test is run before all other variables are set, making freeing resources easier if it fails.
+    int amount_of_blocks = blocks_needed(size_in_bytes);
+    size_t *blockarr = (size_t*)malloc(amount_of_blocks * sizeof(size_t));
+    for (int i = 0; i < amount_of_blocks; i ++)
+    {
+    	int number = allocate_block();
+    	if (number >= 0)
+    	{
+    		blockarr[i] = number;
+    	}
+    	else
+    	{
+    		for (int j = 0; j < i; j ++)
+    		{
+    			free_block(blockarr[j]);	
+    		}
+    		return NULL;
+    	}
+    }
+    
+    // ino points to memory that holds the struct
+    struct inode *ino = (struct inode*) malloc(sizeof(struct inode));
+    
+    // if memory allocation is succesful:
+    if (ino != NULL)
+    {
+   	ino -> id = 1;
+   	ino -> name = strdup(name);
+  	ino -> is_directory = 0;
+    	ino -> filesize = size_in_bytes;
+    	ino -> blocks = blockarr;
+    
+ 	// updating parent inode.    
+   	parent -> num_children ++;
+	parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode *));
+    	parent -> children[parent->num_children-1] = ino;
+
+    	
+    	
+    	
+    	return ino;
+    }
+    
+    else
+    {
+    	return NULL;
     }
 
-    // creates file
-    struct inode file;
-    file.id = next_inode_id();
-    file.name = name;
-    file.is_directory = 0;
-    file.filesize = size_in_bytes;
-    file.num_blocks = blocks_needed(size_in_bytes);
-    size_t *blocks = (size_t *)malloc(file.num_blocks * sizeof(size_t));
-    file.blocks = blocks;
 
-    // update parent
-    parent->num_children++;
-    int last = parent->num_children - 1;
-    parent->children[last] = &file;
-
-    return &file;
 }
+
+
 
 struct inode *create_dir(struct inode *parent, char *name)
 {
