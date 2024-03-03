@@ -165,7 +165,7 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
     fread(&id, sizeof(int), 1, file);
     inode->id = id;
     *reader += sizeof(int);
-    printf("--- ID: 0x%x\n", id);
+    printf("ID: 0x%x\n", id);
 
     // name_len;
     int name_len;
@@ -177,7 +177,7 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
     fread(name_ptr, 1, name_len, file);
     inode->name = name_ptr;
     *reader += sizeof(char) * name_len;
-    printf("Name: %s\n", name_ptr);
+    printf("    Name: %s\n", name_ptr);
 
     // is_directory
     char is_directory;
@@ -195,22 +195,23 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
         if (num_children == 0)
         {
             inode->children = NULL;
-            printf("Finished directory %s\n", name_ptr);
+            printf("    Finished directory %s\n", name_ptr);
             return inode;
         }
 
         struct inode **children = malloc(sizeof(struct inode *) * num_children);
+        *reader += sizeof(size_t) * num_children;
 
         for (int i = 0; i < num_children; i++)
         {
-            printf("%s -> children[%d] \n", name_ptr, i);
+            printf("reader: %d\n", *reader);
+            printf("  %s -> children[%d] \n", name_ptr, i);
             children[i] = load_inodes_recursive(file, reader);
         }
 
-        *reader += sizeof(size_t) * num_children;
         inode->children = children;
 
-        printf("Finished directory %s\n", name_ptr);
+        printf("    Finished directory %s\n", name_ptr);
     }
     else
     {
@@ -232,7 +233,7 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
         inode->blocks = blocks;
         *reader += sizeof(size_t) * num_blocks;
 
-        printf("Finished file %s\n", name_ptr);
+        printf("    Finished file %s\n", name_ptr);
     }
     return inode;
 }
