@@ -110,3 +110,24 @@ clean:
 	rm -rf *.o
 	rm -f $(BIN)
 
+debug: CFLAGS += -g
+debug: $(BIN)
+
+gdb_create_fs_1: create_fs_1
+	gdb -ex run --args ./create_fs_1 create_example1/master_file_table create_example1/block_allocation_table
+
+gdb_create_fs_2: create_fs_2
+	gdb -ex run --args ./create_fs_2 create_example2/master_file_table create_example2/block_allocation_table
+
+gdb_create_fs_3: create_fs_3
+	gdb -ex run --args ./create_fs_3 create_example3/master_file_table create_example3/block_allocation_table
+
+gdb_load_fs: load_fs
+	gdb -ex run --args ./load_fs load_example1/master_file_table load_example1/block_allocation_table
+
+gdb_del_fs: del_fs
+	gdb -ex run --args ./del_fs del_example1/master_file_table del_example1/block_allocation_table
+
+gdb_test: gdb_create_fs_1 gdb_create_fs_2 gdb_create_fs_3 gdb_load_fs gdb_del_fs
+
+gdb -ex run --args ./load_fs load_example1/master_file_table load_example1/block_allocation_table

@@ -165,6 +165,7 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
     fread(&id, sizeof(int), 1, file);
     *reader += sizeof(int);
     inode->id = id;
+    printf("--- ID: %d\n", id);
 
     // name_len;
     int name_len;
@@ -176,6 +177,7 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
     fread(name_ptr, 1, name_len, file);
     *reader += sizeof(char) * name_len;
     inode->name = name_ptr;
+    printf("Name: %s\n", name_ptr);
 
     // is_directory
     char is_directory;
@@ -187,6 +189,7 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
     {
         int num_children;
         fread(&num_children, sizeof(int), 1, file);
+        *reader += sizeof(int);
         inode->num_children = num_children;
 
         struct inode **children = malloc(sizeof(struct inode *) * num_children);
@@ -194,9 +197,11 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
         int new_reader = *reader;
         for (int i = 0; i < num_children; i++)
         {
+            printf("%s->children[%d] = \n", name_ptr, i);
             children[i] = load_inodes_recursive(file, &new_reader);
         }
         inode->children = children;
+        printf("Finished directory %s\n", name_ptr);
     }
     else
     {
@@ -214,8 +219,8 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
         fread(blocks, sizeof(size_t), num_blocks, file);
         fseek(file, num_blocks * sizeof(size_t), SEEK_CUR);
         inode->blocks = blocks;
+        printf("Finished file %s\n", name_ptr);
     }
-
     return inode;
 }
 
@@ -226,7 +231,7 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
  */
 struct inode *load_inodes(char *master_file_table)
 {
-    FILE *file = fopen(master_file_table, "r");
+    FILE *file = fopen(master_file_table, "rb");
 
     if (!file)
     {
