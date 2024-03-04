@@ -101,7 +101,7 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 }
 
 
-
+//notat: husk å lagre den nye dir-en i heapen
 struct inode *create_dir(struct inode *parent, char *name)
 {
     if (find_inode_by_name(parent, name) != NULL)
@@ -110,6 +110,7 @@ struct inode *create_dir(struct inode *parent, char *name)
     }
 
     struct inode dir;
+    struct inode* dirptr = malloc(sizeof(struct inode));
     dir.id = next_inode_id();
     dir.name = name;
     dir.is_directory = 1;
@@ -119,7 +120,7 @@ struct inode *create_dir(struct inode *parent, char *name)
     int num_siblings = parent->num_children++;
     parent->children[(num_siblings) * sizeof(long int)] = &dir;
 
-    return &dir;
+    return dirptr;
 }
 
 /* Check all the inodes that are directly referenced by
@@ -274,6 +275,11 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
         fread(blocks, sizeof(size_t), num_blocks, file);
         inode->blocks = blocks;
         *reader += sizeof(size_t) * num_blocks;
+        
+        //for simulation
+        for(int i = 0; i<num_blocks; i++){
+            allocate_block();
+        }
     }
     return inode;
 }
