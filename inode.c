@@ -61,11 +61,14 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
     	}
     	else
     	{
+            /*
     		for (int j = 0; j < 50; j ++)//50 is hardcoded
     		{
     			free_block(blockarr[j]);
                 printf("you failed");	
     		}
+            */
+            release_block_allocation_table_name();
     		return NULL;
     	}
     }
@@ -82,7 +85,7 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
     ino -> filesize = size_in_bytes;
     ino -> blocks = blockarr;
     ino->num_blocks = amount_of_blocks;
-
+    
     //why not
     ino->children = NULL;
     
@@ -114,7 +117,8 @@ struct inode *create_dir(struct inode *parent, char *name)
         return NULL;
     } 
     struct inode *dir =  malloc(sizeof(struct inode));
-
+    
+    dir->blocks=NULL;
     
     if(parent != NULL){
         int num_siblings = parent->num_children++;
@@ -122,7 +126,9 @@ struct inode *create_dir(struct inode *parent, char *name)
         parent->children[num_siblings] = dir;
     }
     dir->id = next_inode_id();
-    dir->name = strdup(name);
+
+    dir->name = malloc(strlen(name));
+    dir-> name = strdup(name);
     dir->is_directory = 1;
     dir->num_children = 0;
     dir->children = NULL;
@@ -148,12 +154,14 @@ struct inode *find_inode_by_name(struct inode *parent, char *name)
 
     int num_children = parent->num_children;
 
+    //printf("numch:%d\n", num_children);
     for (int i = 0; i < num_children; i++)
     {
-        struct inode *child = parent->children[i];
-        if (strcmp(child->name, name) == 0)
+        char* childname = parent->children[i]->name;
+    //printf("name: %s\n", childname);
+        if (strcmp(childname, name) == 0)
         {
-            return child;
+            return parent->children[i];
         }
     }
 
@@ -185,6 +193,7 @@ int is_node_in_parent(struct inode *parent, struct inode *node)
 
 int delete_file(struct inode *parent, struct inode *node)
 {
+    
     for (int i = 0; i < node->num_blocks; i++)
     {
         free_block(node->blocks[i]);
@@ -198,6 +207,7 @@ int delete_file(struct inode *parent, struct inode *node)
 
 int delete_dir(struct inode *parent, struct inode *node)
 {
+    printf("name: %s", node->name);
     if (node->num_children > 0)
     {
         return -1;
@@ -248,6 +258,9 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
 
     if (is_directory)
     {
+        //hha
+        inode->blocks=NULL;
+
         int num_children;
         fread(&num_children, sizeof(int), 1, file);
         inode->num_children = num_children;
@@ -271,6 +284,8 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
     }
     else
     {
+        //stupid
+        inode-> children = NULL;
         // filesize
         int filesize;
         fread(&filesize, sizeof(int), 1, file);
@@ -290,12 +305,17 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
         *reader += sizeof(size_t) * num_blocks;
         
         /*
-       for simulation - need it for load 1, fucks up 2 and 3
-        for(int i = 0; i<num_blocks; i++){
-            int out = 0;//allocate_block();
-            printf("Hiiii: %d, ", out);
-        }
+       for simulation
         */
+        for(int i = 0; i<num_blocks; i++){
+            int out = allocate_block();
+            if (out == -1){
+                format_disk();
+                printf("\n\nsorry mate, disk is full, try again\n\n\n");
+                exit(-1);
+            }
+        }
+        
     }
     return inode;
 }
@@ -433,8 +453,7 @@ void fs_shutdown(struct inode *inode)
             fs_shutdown(inode->children[i]);
         }
     }
-
-    printf("===========kjjh========debug==============\n");
+    
     if (inode->name)
         free(inode->name);
     if (inode->children)
