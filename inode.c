@@ -54,8 +54,6 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
     size_t *blockarr = (size_t*)malloc(amount_of_blocks * sizeof(size_t));
     for (int i = 0; i < amount_of_blocks; i ++)
     {
-        printf("===========kjjh========debug==============\n");
-
     	int number = allocate_block();
     	if (number >= 0)
     	{
