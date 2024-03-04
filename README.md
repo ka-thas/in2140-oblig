@@ -1,57 +1,14 @@
 # IN2140 oblig
 
-Team: Christian, Iver, Ka
+> Team: Christian, Iver, Ka
 
-This is the only mandatory assignment for the spring '24 semester. A bunch of seminary teachers have been warning us of it's difficulty :/
+# 2.1 Design
 
-## Advice
+### How to read the master file table (as described in the lecture slides) file from disk and load the inodes into memory.
 
-It may be appropriate to implement the functions in this order:
+### Any implementation requirements that are not met.
 
-1. Functions required for loading:
+### Any part of the implementation that deviates from the precode. For example, if you are creating your own files, explain what their purpose is.
 
-    – load_inodes
+### Any tests that fail and what you think the cause may be
 
-    – find_inode_by_name
-
-2. Functions required to create files and directories and update the master file
-   table and the block allocation table.
-
-    – create_dir
-
-    – create_file
-
-    – fs_shutdown
-
-3. Functions required to delete files and directories:
-
-    – delete_file
-
-    – delete_dir
-
-## Implementation
-
-[ ] Load File System - Iver
-
-[x] Find Inode by Name - Ka
-
-[ ] Create file - Christian
-
-[ ] Create Directory - Ka
-
-[ ] Delete a file
-
-[ ] Delete a directory
-
-[ ] Shut Down File System
-
----
-
-push-test
-
-struct inode\* load_inodes();
-The function reads the master file table file and creates an inode in memory for each
-corresponding entry in the file. The function puts pointers between the inodes correctly.
-The master file table file on disk remains unchanged.
-If the loading operation succeeds, the inode returned by this function should always be
-the root directory, meaning that its name field should point to the string “/”.
