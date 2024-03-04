@@ -51,7 +51,7 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 
     // allocation test is run before all other variables are set, making freeing resources easier if it fails.
     int amount_of_blocks = blocks_needed(size_in_bytes);
-    size_t *blockarr = (size_t *)malloc(amount_of_blocks * sizeof(size_t));
+    size_t *blockarr = malloc(amount_of_blocks * sizeof(size_t));
     for (int i = 0; i < amount_of_blocks; i++)
     {
         int number = allocate_block();
@@ -62,7 +62,7 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
         else
         {
             format_disk();
-            exit(-1);
+            return NULL;
         }
     }
 
