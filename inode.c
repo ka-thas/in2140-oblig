@@ -61,9 +61,10 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
     	}
     	else
     	{
-    		for (int j = 0; j < i; j ++)
+    		for (int j = 0; j < 50; j ++)//50 is hardcoded
     		{
-    			free_block(blockarr[j]);	
+    			free_block(blockarr[j]);
+                printf("you failed");	
     		}
     		return NULL;
     	}
@@ -75,11 +76,15 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
     // if memory allocation is succesful:
     if (ino != NULL)
     {
-   	ino -> id = 1;
+   	ino -> id = next_inode_id();
    	ino -> name = strdup(name);
   	ino -> is_directory = 0;
-    	ino -> filesize = size_in_bytes;
-    	ino -> blocks = blockarr;
+    ino -> filesize = size_in_bytes;
+    ino -> blocks = blockarr;
+    ino->num_blocks = amount_of_blocks;
+
+    //why not
+    ino->children = NULL;
     
  	// updating parent inode.    
    	parent -> num_children ++;
@@ -101,25 +106,29 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 }
 
 
-
 struct inode *create_dir(struct inode *parent, char *name)
 {
     if (find_inode_by_name(parent, name) != NULL)
-    {
+    { 
+        
         return NULL;
+    } 
+    struct inode *dir =  malloc(sizeof(struct inode));
+
+    
+    if(parent != NULL){
+        int num_siblings = parent->num_children++;
+	    parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode *));
+        parent->children[num_siblings] = dir;
     }
+    dir->id = next_inode_id();
+    dir->name = strdup(name);
+    dir->is_directory = 1;
+    dir->num_children = 0;
+    dir->children = NULL;
 
-    struct inode dir;
-    dir.id = next_inode_id();
-    dir.name = name;
-    dir.is_directory = 1;
-    dir.num_children = 0;
-    dir.children = NULL;
-
-    int num_siblings = parent->num_children++;
-    parent->children[(num_siblings) * sizeof(long int)] = &dir;
-
-    return &dir;
+    //*dirptr = dir;
+    return dir;
 }
 
 /* Check all the inodes that are directly referenced by
@@ -131,6 +140,7 @@ struct inode *find_inode_by_name(struct inode *parent, char *name)
 {
     /* gå gjennom hvert barn og sjekk navnet deres
     returner peker til barn-inoden hvis funnet */
+    if (parent == NULL){return NULL;}
     if (parent->is_directory == 0)
     {
         return NULL;
@@ -181,6 +191,7 @@ int delete_file(struct inode *parent, struct inode *node)
     }
     parent->num_children--;
     parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode));
+    free(node->name);
     free(node);
     return 0;
 }
@@ -195,12 +206,15 @@ int delete_dir(struct inode *parent, struct inode *node)
     {
         parent->num_children--;
         parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode));
+        free(node->name);
+        if (node->children)
+        free(node->children);
         free(node);
         return 0;
     }
 }
 
-// TODO
+
 struct inode *load_inodes_recursive(FILE *file, int *reader)
 {
     next_inode_id();
@@ -274,6 +288,14 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
         fread(blocks, sizeof(size_t), num_blocks, file);
         inode->blocks = blocks;
         *reader += sizeof(size_t) * num_blocks;
+        
+        /*
+       for simulation - need it for load 1, fucks up 2 and 3
+        for(int i = 0; i<num_blocks; i++){
+            int out = 0;//allocate_block();
+            printf("Hiiii: %d, ", out);
+        }
+        */
     }
     return inode;
 }
@@ -412,6 +434,7 @@ void fs_shutdown(struct inode *inode)
         }
     }
 
+    printf("===========kjjh========debug==============\n");
     if (inode->name)
         free(inode->name);
     if (inode->children)
