@@ -63,11 +63,14 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
     	}
     	else
     	{
+            /*
     		for (int j = 0; j < 50; j ++)//50 is hardcoded
     		{
     			free_block(blockarr[j]);
                 printf("you failed");	
     		}
+            */
+            release_block_allocation_table_name();
     		return NULL;
     	}
     }
@@ -84,7 +87,7 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
     ino -> filesize = size_in_bytes;
     ino -> blocks = blockarr;
     ino->num_blocks = amount_of_blocks;
-
+    
     //why not
     ino->children = NULL;
     
@@ -116,7 +119,8 @@ struct inode *create_dir(struct inode *parent, char *name)
         return NULL;
     } 
     struct inode *dir =  malloc(sizeof(struct inode));
-
+    
+    dir->blocks=NULL;
     
     if(parent != NULL){
         int num_siblings = parent->num_children++;
@@ -257,7 +261,7 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
     if (is_directory)
     {
         //hha
-        inode->num_blocks=NULL;
+        inode->blocks=NULL;
 
         int num_children;
         fread(&num_children, sizeof(int), 1, file);
@@ -282,6 +286,8 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
     }
     else
     {
+        //stupid
+        inode-> children = NULL;
         // filesize
         int filesize;
         fread(&filesize, sizeof(int), 1, file);
@@ -301,12 +307,17 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
         *reader += sizeof(size_t) * num_blocks;
         
         /*
-       for simulation - need it for load 1, fucks up 2 and 3
+       for simulation
         */
         for(int i = 0; i<num_blocks; i++){
             int out = allocate_block();
-            printf("Hiiii: %d, ", out);
+            if (out == -1){
+                format_disk();
+                printf("\n\nsorry mate, disk is full, try again\n\n\n");
+                exit(-1);
+            }
         }
+        
     }
     return inode;
 }
@@ -444,6 +455,7 @@ void fs_shutdown(struct inode *inode)
             fs_shutdown(inode->children[i]);
         }
     }
+    
     if (inode->name)
         free(inode->name);
     if (inode->children)
