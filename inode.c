@@ -434,6 +434,7 @@ void fs_shutdown(struct inode *inode)
         }
     }
 
+    printf("===========kjjh========debug==============\n");
     if (inode->name)
         free(inode->name);
     if (inode->children)
