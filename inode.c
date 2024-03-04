@@ -102,16 +102,7 @@ struct inode *create_dir(struct inode *parent, char *name)
     {
         return NULL;
     }
-    struct inode *dir = malloc(sizeof(struct inode));
 
-    dir->blocks = NULL;
-
-    if (parent != NULL)
-    {
-        int num_siblings = parent->num_children++;
-        parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode *));
-        parent->children[num_siblings] = dir;
-    }
     if (find_inode_by_name(parent, name) != NULL) // if name already exists
     {
         return NULL;
@@ -122,6 +113,8 @@ struct inode *create_dir(struct inode *parent, char *name)
     {
         return NULL;
     }
+
+    dir->blocks = NULL;
 
     parent->num_children++;
     int num_siblings = parent->num_children;
