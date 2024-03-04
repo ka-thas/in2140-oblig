@@ -61,12 +61,8 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
         }
         else
         {
-            for (int j = 0; j < 50; j++) // 50 is NUM_BLOCKS in allocation.c
-            {
-                free_block(blockarr[j]);
-                printf("you failed");
-            }
-            return NULL;
+            format_disk();
+            exit(-1);
         }
     }
 
@@ -106,6 +102,16 @@ struct inode *create_dir(struct inode *parent, char *name)
     {
         return NULL;
     }
+    struct inode *dir = malloc(sizeof(struct inode));
+
+    dir->blocks = NULL;
+
+    if (parent != NULL)
+    {
+        int num_siblings = parent->num_children++;
+        parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode *));
+        parent->children[num_siblings] = dir;
+    }
     if (find_inode_by_name(parent, name) != NULL) // if name already exists
     {
         return NULL;
@@ -123,6 +129,8 @@ struct inode *create_dir(struct inode *parent, char *name)
     parent->children[num_siblings - 1] = dir;
 
     dir->id = next_inode_id();
+
+    dir->name = malloc(strlen(name));
     dir->name = strdup(name);
     dir->is_directory = 1;
     dir->num_children = 0;
@@ -156,7 +164,7 @@ struct inode *find_inode_by_name(struct inode *parent, char *name)
         child = parent->children[i];
         if (strcmp(child->name, name) == 0)
         {
-            return child;
+            return parent->children[i];
         }
     }
 
@@ -191,6 +199,7 @@ int is_node_in_parent(struct inode *parent, struct inode *node)
 
 int delete_file(struct inode *parent, struct inode *node)
 {
+
     for (int i = 0; i < node->num_blocks; i++)
     {
         free_block(node->blocks[i]);
@@ -308,9 +317,18 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
         inode->blocks = blocks;
         *reader += sizeof(size_t) * num_blocks;
 
+        /*
+       for simulation
+        */
         for (int i = 0; i < num_blocks; i++)
         {
-            allocate_block();
+            int out = allocate_block();
+            if (out == -1)
+            {
+                format_disk();
+                printf("\n\nsorry mate, disk is full, try again\n\n\n");
+                exit(-1);
+            }
         }
     }
     return inode;
