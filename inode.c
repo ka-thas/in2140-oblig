@@ -43,13 +43,9 @@ static int next_inode_id()
 /* Oppretter en fil. */
 struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 {
-    printf("> create_file ( %s )\n", name);
+    // printf(">> create_file ( %s )\n", name);
 
     if (find_inode_by_name(parent, name) != NULL)
-    {
-        return NULL;
-    }
-    if (parent == NULL)
     {
         return NULL;
     }
@@ -75,8 +71,7 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
         }
     }
 
-    // ino points to memory that holds the struct
-    struct inode *inode = (struct inode *)malloc(sizeof(struct inode));
+    struct inode *inode = malloc(sizeof(struct inode));
     if (inode == NULL)
     {
         return NULL;
@@ -88,26 +83,23 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
     inode->filesize = size_in_bytes;
     inode->blocks = blockarr;
     inode->num_blocks = amount_of_blocks;
-
-    // why not
     inode->children = NULL;
 
-    // updating parent inode.
-    parent->num_children++;
-    parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode *));
-    parent->children[parent->num_children - 1] = inode;
+    // updating parent inode for all except root
+    if (parent != NULL)
+    {
+
+        parent->num_children++;
+        parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode *));
+        parent->children[parent->num_children - 1] = inode;
+    }
 
     return inode;
 }
 
 struct inode *create_dir(struct inode *parent, char *name)
 {
-    printf("> create_dir( %s )\n", name);
-
-    if (parent == NULL)
-    {
-        return NULL;
-    }
+    // printf("> create_dir( %s )\n", name);
 
     if (find_inode_by_name(parent, name) != NULL) // if name already exists
     {
@@ -122,10 +114,14 @@ struct inode *create_dir(struct inode *parent, char *name)
 
     dir->blocks = NULL;
 
-    parent->num_children++;
-    int num_siblings = parent->num_children;
-    parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode *));
-    parent->children[num_siblings - 1] = dir;
+    // updating parent inode for all except root
+    if (parent != NULL)
+    {
+        parent->num_children++;
+        int num_siblings = parent->num_children;
+        parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode *));
+        parent->children[num_siblings - 1] = dir;
+    }
 
     dir->id = next_inode_id();
     dir->name = strdup(name);
