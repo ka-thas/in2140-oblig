@@ -155,7 +155,8 @@ struct inode *find_inode_by_name(struct inode *parent, char *name)
     for (int i = 0; i < num_children; i++)
     {
         child = parent->children[i];
-        if (strcmp(child->name, name) == 0)
+        char* childname = child->name;
+        if (strcmp(childname, name) == 0)
         {
             return parent->children[i];
         }
@@ -199,9 +200,18 @@ int delete_file(struct inode *parent, struct inode *node)
     }
 
     parent->num_children--;
-    parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode));
+    struct inode** tempchild;
+    tempchild = malloc(sizeof(struct inode*)*parent->num_children);
+    int j = 0;
+    for (int i= 0; i<parent->num_children+1;i++){
+        if(parent->children[i] == node ) continue;
+        
+        tempchild[j] = parent->children[i];
+        j++;
+    }    
+    free(parent->children);
+    parent->children = tempchild;
     free(node->name);
-
     free(node);
     return 0;
 }
@@ -217,16 +227,25 @@ int delete_dir(struct inode *parent, struct inode *node)
     {
         return -1;
     }
-
+    /*
     parent->num_children--;
     parent->children[parent->num_children] = NULL;
     parent->children = realloc(parent->children, sizeof(struct inode) * parent->num_children);
+    */
 
-    if (verified_delete_in_parent(parent, node) == 0)
-    {
-        return -1;
-    }
-
+    
+    parent->num_children--;
+    struct inode** tempchild;
+    tempchild = malloc(sizeof(struct inode*)*parent->num_children);
+    int j = 0;
+    for (int i= 0; i<parent->num_children+1;i++){
+        if(parent->children[i] == node ) continue;
+        
+        tempchild[j] = parent->children[i];
+        j++;
+    }    
+    free(parent->children);
+    parent->children = tempchild;
     free(node->name);
     free(node);
     return 0;
@@ -312,7 +331,6 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
 
         /*
        for simulation
-        */
         for (int i = 0; i < num_blocks; i++)
         {
             int out = allocate_block();
@@ -323,6 +341,7 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
                 exit(-1);
             }
         }
+        */
     }
     return inode;
 }
