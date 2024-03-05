@@ -49,10 +49,18 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
     {
         return NULL;
     }
+    if (parent == NULL)
+    {
+        return NULL;
+    }
 
     // allocation test is run before all other variables are set, making freeing resources easier if it fails.
     int amount_of_blocks = blocks_needed(size_in_bytes);
     size_t *blockarr = malloc(amount_of_blocks * sizeof(size_t));
+    if (blockarr == NULL)
+    {
+        return NULL;
+    }
     for (int i = 0; i < amount_of_blocks; i++)
     {
         int number = allocate_block();
@@ -68,39 +76,28 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
     }
 
     // ino points to memory that holds the struct
-    struct inode *ino = (struct inode *)malloc(sizeof(struct inode));
-
-    // if memory allocation is succesful:
-    if (ino != NULL)
-    {
-        ino->id = next_inode_id();
-        ino->name = strdup(name);
-        ino->is_directory = 0;
-        ino->filesize = size_in_bytes;
-        ino->blocks = blockarr;
-        ino->num_blocks = amount_of_blocks;
-
-        // why not
-        ino->children = NULL;
-
-        // updating parent inode. find this
-    printf("to\n");
-        parent->num_children++;
-    printf("to\n");
-        struct inode** tempchild;
-        tempchild = malloc(sizeof(struct inode*)*parent->num_children);
-       
-        free(parent->children);
-        parent->children = tempchild;
-        parent->children[parent->num_children - 1] = ino;
-
-        return ino;
-    }
-
-    else
+    struct inode *inode = (struct inode *)malloc(sizeof(struct inode));
+    if (inode == NULL)
     {
         return NULL;
     }
+
+    inode->id = next_inode_id();
+    inode->name = strdup(name);
+    inode->is_directory = 0;
+    inode->filesize = size_in_bytes;
+    inode->blocks = blockarr;
+    inode->num_blocks = amount_of_blocks;
+
+    // why not
+    inode->children = NULL;
+
+    // updating parent inode.
+    parent->num_children++;
+    parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode *));
+    parent->children[parent->num_children - 1] = inode;
+
+    return inode;
 }
 
 struct inode *create_dir(struct inode *parent, char *name)
@@ -126,7 +123,6 @@ struct inode *create_dir(struct inode *parent, char *name)
     }
 
     dir->id = next_inode_id();
-
     dir->name = strdup(name);
     dir->is_directory = 1;
     dir->num_children = 0;
@@ -261,6 +257,10 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
 
     // prep
     struct inode *inode = malloc(sizeof(struct inode));
+    if (inode == NULL)
+    {
+        return NULL;
+    }
     fseek(file, *reader, SEEK_SET);
 
     // ID
@@ -276,6 +276,10 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
 
     // name
     char *name_ptr = malloc(name_len);
+    if (name_ptr == NULL)
+    {
+        return NULL;
+    }
     fread(name_ptr, 1, name_len, file);
     inode->name = name_ptr;
     *reader += sizeof(char) * name_len;
@@ -302,6 +306,10 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
         }
 
         struct inode **children = malloc(sizeof(struct inode *) * num_children);
+        if (children == NULL)
+        {
+            return NULL;
+        }
         *reader += sizeof(size_t) * num_children;
 
         for (int i = 0; i < num_children; i++)
@@ -329,23 +337,13 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
 
         // blocks
         size_t *blocks = malloc(sizeof(size_t) * num_blocks);
+        if (blocks == NULL)
+        {
+            return NULL;
+        }
         fread(blocks, sizeof(size_t), num_blocks, file);
         inode->blocks = blocks;
         *reader += sizeof(size_t) * num_blocks;
-
-        /*
-       for simulation
-        for (int i = 0; i < num_blocks; i++)
-        {
-            int out = allocate_block();
-            if (out == -1)
-            {
-                format_disk();
-                printf("\n\nsorry mate, disk is full, try again\n\n\n");
-                exit(-1);
-            }
-        }
-        */
     }
     return inode;
 }
