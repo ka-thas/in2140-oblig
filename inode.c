@@ -166,14 +166,25 @@ struct inode *find_inode_by_name(struct inode *parent, char *name)
 
 static int verified_delete_in_parent(struct inode *parent, struct inode *node)
 {
-    int num_children = parent->num_children;
-    for (int i = 0; i < num_children; i++)
+    parent->num_children--;
+    struct inode **tempchild;
+    tempchild = malloc(sizeof(struct inode *) * parent->num_children);
+    if (tempchild == NULL)
+    {
+        fprintf(stderr, "Failed to allocate memory for tempchild\n");
+        return -1;
+    }
+    int j = 0;
+    for (int i = 0; i < parent->num_children + 1; i++)
     {
         if (parent->children[i] == node)
-        {
-            return 1;
-        }
+            continue;
+
+        tempchild[j] = parent->children[i];
+        j++;
     }
+    free(parent->children);
+    parent->children = tempchild;
     return 0;
 }
 
@@ -198,27 +209,9 @@ int delete_file(struct inode *parent, struct inode *node)
         free_block(node->blocks[i]);
     }
 
-    struct inode **children = malloc(sizeof(struct inode *) * (parent->num_children - 1));
-    for (int i = 0; i < parent->num_children; i++)
-    {
-        if (node == parent->children[i])
-            continue;
-        children[i] = parent->children[i];
-    }
-    parent->num_children--;
-    struct inode **tempchild;
-    tempchild = malloc(sizeof(struct inode *) * parent->num_children);
-    int j = 0;
-    for (int i = 0; i < parent->num_children + 1; i++)
-    {
-        if (parent->children[i] == node)
-            continue;
+    if (verified_delete_in_parent(parent, node) == 0)
+        return 0;
 
-        tempchild[j] = parent->children[i];
-        j++;
-    }
-    free(parent->children);
-    parent->children = tempchild;
     free(node->name);
     free(node->blocks);
     free(node);
@@ -232,30 +225,16 @@ int delete_dir(struct inode *parent, struct inode *node)
         return -1;
     }
 
-    if (is_node_in_parent(parent, node) == 0) // if node is not in parent
+    if (parent->is_directory == 1)
     {
-        return -1;
+        if (is_node_in_parent(parent, node) == 0) // if node is not in parent
+        {
+            return -1;
+        }
+        if (verified_delete_in_parent(parent, node) == 0)
+            return 0;
     }
-    /*
-    parent->num_children--;
-    parent->children[parent->num_children] = NULL;
-    parent->children = realloc(parent->children, sizeof(struct inode) * parent->num_children);
-    */
 
-    parent->num_children--;
-    struct inode **tempchild;
-    tempchild = malloc(sizeof(struct inode *) * parent->num_children);
-    int j = 0;
-    for (int i = 0; i < parent->num_children + 1; i++)
-    {
-        if (parent->children[i] == node)
-            continue;
-
-        tempchild[j] = parent->children[i];
-        j++;
-    }
-    free(parent->children);
-    parent->children = tempchild;
     free(node->name);
     free(node->children);
     free(node);
