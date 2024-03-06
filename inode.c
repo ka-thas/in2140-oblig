@@ -43,9 +43,10 @@ static int next_inode_id()
 /* Oppretter en fil. */
 struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 {
-    // printf(">> create_file ( %s )\n", name);
+    if (!parent)
+        return NULL;
 
-    if (find_inode_by_name(parent, name) != NULL)
+    if (find_inode_by_name(parent, name) == NULL)
     {
         return NULL;
     }
@@ -58,6 +59,7 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
         fprintf(stderr, "Failed to allocate memory for blockarr\n");
         return NULL;
     }
+
     for (int i = 0; i < amount_of_blocks; i++)
     {
         int number = allocate_block();
@@ -72,7 +74,8 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
         }
     }
 
-    struct inode *inode = malloc(sizeof(struct inode));
+    // ino points to memory that holds the struct
+    struct inode *inode = (struct inode *)malloc(sizeof(struct inode));
     if (inode == NULL)
     {
         fprintf(stderr, "Failed to allocate memory for inode\n");
@@ -85,6 +88,7 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
     inode->filesize = size_in_bytes;
     inode->blocks = blockarr;
     inode->num_blocks = amount_of_blocks;
+
     inode->children = NULL;
 
     // updating parent inode for all except root
@@ -101,23 +105,17 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 
 struct inode *create_dir(struct inode *parent, char *name)
 {
-    // printf("> create_dir( %s )\n", name);
-
-    if (find_inode_by_name(parent, name) != NULL) // if name already exists
+    if (parent != NULL)
     {
-        return NULL;
+        if (find_inode_by_name(parent, name) != NULL) // if name already exists
+        {
+            return NULL;
+        }
     }
 
     struct inode *dir = malloc(sizeof(struct inode));
-    if (dir == NULL)
-    {
-        fprintf(stderr, "Failed to allocate memory for inode\n");
-        return NULL;
-    }
 
     dir->blocks = NULL;
-
-    // updating parent inode for all except root
     if (parent != NULL)
     {
         parent->num_children++;
@@ -169,11 +167,6 @@ static int verified_delete_in_parent(struct inode *parent, struct inode *node)
     parent->num_children--;
     struct inode **tempchild;
     tempchild = malloc(sizeof(struct inode *) * parent->num_children);
-    if (tempchild == NULL)
-    {
-        fprintf(stderr, "Failed to allocate memory for tempchild\n");
-        return -1;
-    }
     int j = 0;
     for (int i = 0; i < parent->num_children + 1; i++)
     {
@@ -209,9 +202,21 @@ int delete_file(struct inode *parent, struct inode *node)
         free_block(node->blocks[i]);
     }
 
-    if (verified_delete_in_parent(parent, node) == 0)
-        return 0;
+    parent->num_children--;
+    struct inode **tempchild;
+    tempchild = malloc(sizeof(struct inode *) * parent->num_children);
+    int j = 0;
+    for (int i = 0; i < parent->num_children + 1; i++)
+    {
+        if (parent->children[i] == node)
+            continue;
 
+        tempchild[j] = parent->children[i];
+        j++;
+    }
+    free(parent->children);
+    parent->children = tempchild;
+    free(node->blocks);
     free(node->name);
     free(node->blocks);
     free(node);
@@ -220,21 +225,23 @@ int delete_file(struct inode *parent, struct inode *node)
 
 int delete_dir(struct inode *parent, struct inode *node)
 {
-    if (node->num_children != 0)
+    if (node->num_children > 0)
     {
         return -1;
     }
 
-    if (parent->is_directory == 1)
-    {
-        if (is_node_in_parent(parent, node) == 0) // if node is not in parent
-        {
-            return -1;
-        }
-        if (verified_delete_in_parent(parent, node) == 0)
-            return 0;
-    }
+    /*
+    parent->num_children--;
+    parent->children[parent->num_children] = NULL;
+    parent->children = realloc(parent->children, sizeof(struct inode) * parent->num_children);
+    */
 
+    if (parent != NULL)
+    {
+
+        verified_delete_in_parent(parent, node);
+    }
+    free(node->children);
     free(node->name);
     free(node->children);
     free(node);
