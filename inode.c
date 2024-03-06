@@ -98,9 +98,9 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
        
         free(parent->children);
         parent->children = tempchild;
-        parent->children[parent->num_children - 1] = ino;
+        parent->children[parent->num_children - 1] = inode;
 
-        return ino;
+        return inode;
     }
 
     return inode;
