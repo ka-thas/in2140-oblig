@@ -43,7 +43,8 @@ static int next_inode_id()
 /* Oppretter en fil. */
 struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 {
-
+    if(parent)return NULL;
+    printf(":%s:\n", parent->name);
     if (find_inode_by_name(parent, name) != NULL)
     {
         return NULL;
@@ -82,9 +83,15 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
         // why not
         ino->children = NULL;
 
-        // updating parent inode.
+        // updating parent inode. find this
+    printf("to\n");
         parent->num_children++;
-        parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode *));
+    printf("to\n");
+        struct inode** tempchild;
+        tempchild = malloc(sizeof(struct inode*)*parent->num_children);
+       
+        free(parent->children);
+        parent->children = tempchild;
         parent->children[parent->num_children - 1] = ino;
 
         return ino;
@@ -98,32 +105,28 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 
 struct inode *create_dir(struct inode *parent, char *name)
 {
-    if (parent == NULL)
+    if (parent != NULL)
     {
-        return NULL;
-    }
-
     if (find_inode_by_name(parent, name) != NULL) // if name already exists
     {
         return NULL;
     }
-
-    struct inode *dir = malloc(sizeof(struct inode));
-    if (dir == NULL)
-    {
-        return NULL;
+       
     }
 
-    dir->blocks = NULL;
 
-    parent->num_children++;
-    int num_siblings = parent->num_children;
-    parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode *));
-    parent->children[num_siblings - 1] = dir;
+    struct inode *dir = malloc(sizeof(struct inode));
+
+    dir->blocks = NULL;
+    if (parent != NULL){
+        parent->num_children++;
+        int num_siblings = parent->num_children;
+        parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode *));
+        parent->children[num_siblings - 1] = dir;
+    }
 
     dir->id = next_inode_id();
 
-    dir->name = malloc(strlen(name));
     dir->name = strdup(name);
     dir->is_directory = 1;
     dir->num_children = 0;
@@ -211,6 +214,7 @@ int delete_file(struct inode *parent, struct inode *node)
     }    
     free(parent->children);
     parent->children = tempchild;
+    free(node->blocks);
     free(node->name);
     free(node);
     return 0;
@@ -223,17 +227,15 @@ int delete_dir(struct inode *parent, struct inode *node)
         return -1;
     }
 
-    if (is_node_in_parent(parent, node) == 0) // if node is not in parent
-    {
-        return -1;
-    }
+   
     /*
     parent->num_children--;
     parent->children[parent->num_children] = NULL;
     parent->children = realloc(parent->children, sizeof(struct inode) * parent->num_children);
     */
 
-    
+    if(parent != NULL){
+
     parent->num_children--;
     struct inode** tempchild;
     tempchild = malloc(sizeof(struct inode*)*parent->num_children);
@@ -246,6 +248,8 @@ int delete_dir(struct inode *parent, struct inode *node)
     }    
     free(parent->children);
     parent->children = tempchild;
+    }
+    free(node->children);
     free(node->name);
     free(node);
     return 0;
