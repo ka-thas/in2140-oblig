@@ -92,8 +92,15 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
     {
 
         parent->num_children++;
-        parent->children = realloc(parent->children, parent->num_children * sizeof(struct inode *));
-        parent->children[parent->num_children - 1] = inode;
+    printf("to\n");
+        struct inode** tempchild;
+        tempchild = malloc(sizeof(struct inode*)*parent->num_children);
+       
+        free(parent->children);
+        parent->children = tempchild;
+        parent->children[parent->num_children - 1] = ino;
+
+        return ino;
     }
 
     return inode;
@@ -107,6 +114,9 @@ struct inode *create_dir(struct inode *parent, char *name)
     {
         return NULL;
     }
+       
+    }
+
 
     struct inode *dir = malloc(sizeof(struct inode));
     if (dir == NULL)
@@ -114,7 +124,6 @@ struct inode *create_dir(struct inode *parent, char *name)
         fprintf(stderr, "Failed to allocate memory for inode\n");
         return NULL;
     }
-
 
     dir->blocks = NULL;
     if (parent != NULL){
@@ -125,6 +134,8 @@ struct inode *create_dir(struct inode *parent, char *name)
     }
 
     dir->id = next_inode_id();
+
+    dir->name = malloc(strlen(name));
     dir->name = strdup(name);
     dir->is_directory = 1;
     dir->num_children = 0;
