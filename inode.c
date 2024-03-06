@@ -170,14 +170,18 @@ struct inode *find_inode_by_name(struct inode *parent, char *name)
 
 static int verified_delete_in_parent(struct inode *parent, struct inode *node)
 {
-    int num_children = parent->num_children;
-    for (int i = 0; i < num_children; i++)
-    {
-        if (parent->children[i] == node)
-        {
-            return 1;
-        }
-    }
+   parent->num_children--;
+    struct inode** tempchild;
+    tempchild = malloc(sizeof(struct inode*)*parent->num_children);
+    int j = 0;
+    for (int i= 0; i<parent->num_children+1;i++){
+        if(parent->children[i] == node ) continue;
+        
+        tempchild[j] = parent->children[i];
+        j++;
+    }    
+    free(parent->children);
+    parent->children = tempchild;
     return 0;
 }
 
@@ -222,7 +226,7 @@ int delete_file(struct inode *parent, struct inode *node)
 
 int delete_dir(struct inode *parent, struct inode *node)
 {
-    if (node->num_children != 0)
+    if (node->num_children > 0)
     {
         return -1;
     }
@@ -236,18 +240,7 @@ int delete_dir(struct inode *parent, struct inode *node)
 
     if(parent != NULL){
 
-    parent->num_children--;
-    struct inode** tempchild;
-    tempchild = malloc(sizeof(struct inode*)*parent->num_children);
-    int j = 0;
-    for (int i= 0; i<parent->num_children+1;i++){
-        if(parent->children[i] == node ) continue;
-        
-        tempchild[j] = parent->children[i];
-        j++;
-    }    
-    free(parent->children);
-    parent->children = tempchild;
+    verified_delete_in_parent(parent, node);
     }
     free(node->children);
     free(node->name);
