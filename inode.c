@@ -55,7 +55,6 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
     size_t *blockarr = malloc(amount_of_blocks * sizeof(size_t));
     if (blockarr == NULL)
     {
-        fprintf(stderr, "Failed to allocate memory for blockarr\n");
         return NULL;
     }
     for (int i = 0; i < amount_of_blocks; i++)
@@ -75,7 +74,6 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
     struct inode *inode = malloc(sizeof(struct inode));
     if (inode == NULL)
     {
-        fprintf(stderr, "Failed to allocate memory for inode\n");
         return NULL;
     }
 
@@ -107,12 +105,7 @@ struct inode *create_dir(struct inode *parent, char *name)
     {
         return NULL;
     }
-
-    struct inode *dir = malloc(sizeof(struct inode));
-    if (dir == NULL)
-    {
-        fprintf(stderr, "Failed to allocate memory for inode\n");
-        return NULL;
+       
     }
 
     dir->blocks = NULL;
@@ -142,12 +135,16 @@ struct inode *create_dir(struct inode *parent, char *name)
  */
 struct inode *find_inode_by_name(struct inode *parent, char *name)
 {
-    if (parent == NULL || parent->is_directory == 0)
+    /* gå gjennom hvert barn og sjekk navnet deres
+    returner peker til barn-inoden hvis funnet */
+    if (parent == NULL)
     {
-        fprintf(stderr, "Parent is NULL or not a directory\n");
         return NULL;
     }
-
+    if (parent->is_directory == 0)
+    {
+        return NULL;
+    }
     int num_children = parent->num_children;
 
     struct inode *child = NULL;
@@ -157,7 +154,7 @@ struct inode *find_inode_by_name(struct inode *parent, char *name)
         char *childname = child->name;
         if (strcmp(childname, name) == 0)
         {
-            return child;
+            return parent->children[i];
         }
     }
 
@@ -198,29 +195,20 @@ int delete_file(struct inode *parent, struct inode *node)
         free_block(node->blocks[i]);
     }
 
-    struct inode **children = malloc(sizeof(struct inode *) * (parent->num_children - 1));
-    for (int i = 0; i < parent->num_children; i++)
-    {
-        if (node == parent->children[i])
-            continue;
-        children[i] = parent->children[i];
-    }
     parent->num_children--;
-    struct inode **tempchild;
-    tempchild = malloc(sizeof(struct inode *) * parent->num_children);
+    struct inode** tempchild;
+    tempchild = malloc(sizeof(struct inode*)*parent->num_children);
     int j = 0;
-    for (int i = 0; i < parent->num_children + 1; i++)
-    {
-        if (parent->children[i] == node)
-            continue;
-
+    for (int i= 0; i<parent->num_children+1;i++){
+        if(parent->children[i] == node ) continue;
+        
         tempchild[j] = parent->children[i];
         j++;
-    }
+    }    
     free(parent->children);
     parent->children = tempchild;
-    free(node->name);
     free(node->blocks);
+    free(node->name);
     free(node);
     return 0;
 }
@@ -257,7 +245,6 @@ int delete_dir(struct inode *parent, struct inode *node)
     free(parent->children);
     parent->children = tempchild;
     free(node->name);
-    free(node->children);
     free(node);
     return 0;
 }
@@ -270,7 +257,6 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
     struct inode *inode = malloc(sizeof(struct inode));
     if (inode == NULL)
     {
-        fprintf(stderr, "Failed to allocate memory for inode\n");
         return NULL;
     }
     fseek(file, *reader, SEEK_SET);
@@ -290,7 +276,6 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
     char *name_ptr = malloc(name_len);
     if (name_ptr == NULL)
     {
-        fprintf(stderr, "Failed to allocate memory for name\n");
         return NULL;
     }
     fread(name_ptr, 1, name_len, file);
@@ -321,7 +306,6 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
         struct inode **children = malloc(sizeof(struct inode *) * num_children);
         if (children == NULL)
         {
-            fprintf(stderr, "Failed to allocate memory for children\n");
             return NULL;
         }
         *reader += sizeof(size_t) * num_children;
@@ -353,7 +337,6 @@ struct inode *load_inodes_recursive(FILE *file, int *reader)
         size_t *blocks = malloc(sizeof(size_t) * num_blocks);
         if (blocks == NULL)
         {
-            fprintf(stderr, "Failed to allocate memory for blocks\n");
             return NULL;
         }
         fread(blocks, sizeof(size_t), num_blocks, file);
@@ -457,8 +440,7 @@ static int indent = 0;
 void debug_fs(struct inode *node)
 {
     if (node == NULL)
-        fprintf(stderr, "Node is NULL\n");
-    return;
+        return;
     for (int i = 0; i < indent; i++)
         printf("  ");
 
