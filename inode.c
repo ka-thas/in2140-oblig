@@ -43,8 +43,7 @@ static int next_inode_id()
 /* Oppretter en fil. */
 struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 {
-    if(parent)return NULL;
-    printf(":%s:\n", parent->name);
+    if(!parent)return NULL;
     if (find_inode_by_name(parent, name) != NULL)
     {
         return NULL;
@@ -80,16 +79,16 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
         ino->blocks = blockarr;
         ino->num_blocks = amount_of_blocks;
 
-        // why not
+        // debug
         ino->children = NULL;
 
         // updating parent inode. find this
-    printf("to\n");
         parent->num_children++;
-    printf("to\n");
         struct inode** tempchild;
         tempchild = malloc(sizeof(struct inode*)*parent->num_children);
-       
+        for(int i = 0; i+1<parent->num_children; i++){
+            tempchild[i] = parent->children[i];
+        }
         free(parent->children);
         parent->children = tempchild;
         parent->children[parent->num_children - 1] = ino;
@@ -99,6 +98,7 @@ struct inode *create_file(struct inode *parent, char *name, int size_in_bytes)
 
     else
     {
+        printf("allocation fail");
         return NULL;
     }
 }
